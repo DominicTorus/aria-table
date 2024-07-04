@@ -110,7 +110,7 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                   //   onPress={() => onClose}
                   onPress={post}
                 >
-                  Post
+                  Save
                 </Button>
               </div>
             </>

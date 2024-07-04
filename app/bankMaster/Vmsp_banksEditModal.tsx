@@ -108,7 +108,7 @@ const Vmsp_banksEditModal = ({
                   //   onPress={() => onClose}
                   onPress={() => post()}
                 >
-                  Post
+                  Edit
                 </Button>
               </div>
             </>
