@@ -22,54 +22,89 @@ export default function Vmsp_banksTable() {
   const [filterValue, setFilterValue] = useState("");
   const hasSearchFilter = Boolean(filterValue);
   const [refetch, setRefetch] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    fetch("http://192.168.2.94:3010/vmsp_banks")
-      .then((res) => res.json())
-      .then((res) => {
-        console.log(res);
-        setVmsp_bankss(res);
-      });
-  }, [refetch]);
 
-  const filteredItems = useMemo(() => {
-    let filteredVmsp_bankss = [...vmsp_bankss];
-
-    if (hasSearchFilter) {
-      filteredVmsp_bankss = filteredVmsp_bankss.filter(
-        (vmsp_banks) =>
-          vmsp_banks.bank_code &&
-          vmsp_banks.bank_code.toLowerCase().includes(filterValue.toLowerCase())
+  const fetchData = async (page: number, filterValue: string) => {
+    try {
+      const response = await fetch(
+        `http://192.168.2.94:3010/vmsp_banks/get?page=${page}&limit=${rowsPerPage}&filter=${filterValue}`
       );
+      const data = await response.json();
+      console.log("Fetched data:", data); // Log the fetched data
+
+      // Verify that the data structure is as expected
+      if (data && Array.isArray(data.items) && typeof data.totalPages === "number") {
+        setVmsp_bankss(data.items);
+        setTotalPages(data.totalPages);
+      } else {
+        console.error("Unexpected data structure:", data);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
-    return filteredVmsp_bankss;
-  }, [vmsp_bankss, filterValue, hasSearchFilter]);
+  };
+  useEffect(() => {
+    fetchData(page, filterValue);
+  }, [page, filterValue, refetch]);
+
+
 
   const rowsPerPage = 10;
-  const [page, setPage] = useState(1);
-  const pages = Math.ceil(filteredItems.length / rowsPerPage);
-
-  const items = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    return filteredItems.slice(start, end);
-  }, [page, filteredItems]);
-
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "bank_code",
     direction: "ascending",
   });
-
   const sortedItems = useMemo(() => {
-    return [...items].sort((a: Vmsp_banks, b: Vmsp_banks) => {
+    return [...vmsp_bankss].sort((a: Vmsp_banks, b: Vmsp_banks) => {
       const first = a[sortDescriptor.column as keyof Vmsp_banks] as any;
       const second = b[sortDescriptor.column as keyof Vmsp_banks] as any;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
-  }, [sortDescriptor, items]);
+  }, [sortDescriptor, vmsp_bankss]);
+
+  const Pagination = ({ page, total, onPageChange }: any) => {
+    const pagesToShow = 5; // Number of pages to show around the current page
+    const halfPagesToShow = Math.floor(pagesToShow / 2);
+
+    const startPage = Math.max(1, page - halfPagesToShow);
+    const endPage = Math.min(total, page + halfPagesToShow);
+
+    const pageNumbers:any = [];
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="pagination flex gap-2 items-center">
+        <Button onPress={() => onPageChange(1)} isDisabled={page === 1}>
+          {"<<"}
+        </Button>
+        <Button onPress={() => onPageChange(page - 1)} isDisabled={page === 1}>
+          {"<"}
+        </Button>
+        {pageNumbers.map((number) => (
+          <Button
+            key={number}
+            onPress={() => onPageChange(number)}
+            isDisabled={number === page}
+          >
+            {number}
+          </Button>
+        ))}
+        <Button onPress={() => onPageChange(page + 1)} isDisabled={page === total}>
+          {">"}
+        </Button>
+        <Button onPress={() => onPageChange(total)} isDisabled={page === total}>
+          {">>"}
+        </Button>
+      </div>
+    );
+  };
 
   const onSearchChange = useCallback((value?: string) => {
     if (value) {
@@ -92,7 +127,6 @@ export default function Vmsp_banksTable() {
           <Input
             className="w-full sm:max-w-[44%]"
             placeholder="Search by name..."
-            // startContent={<SearchIcon />}
             value={filterValue}
             // onClear={() => onClear()}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -105,7 +139,6 @@ export default function Vmsp_banksTable() {
       </div>
     );
   }, [filterValue, onSearchChange, onClear]);
-  console.log(vmsp_bankss, "parama");
 
   const renderCell = (
     vmsp_banks: Vmsp_banks,
@@ -143,54 +176,12 @@ export default function Vmsp_banksTable() {
         return cellValue;
     }
   };
-  const Pagination = ({ page, total, onPageChange }: any) => {
-    const pagesToShow = 5; // Number of pages to show around the current page
-    const halfPagesToShow = Math.floor(pagesToShow / 2);
-
-    const startPage = Math.max(1, page - halfPagesToShow);
-    const endPage = Math.min(total, page + halfPagesToShow);
-
-    const pageNumbers = [];
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
-
-    return (
-      <div className="pagination flex gap-2 items-center">
-        <Button onPress={() => onPageChange(1)} isDisabled={page === 1}>
-          {"<<"}
-        </Button>
-        <Button onPress={() => onPageChange(page - 1)} isDisabled={page === 1}>
-          {"<"}
-        </Button>
-        {pageNumbers.map((number) => (
-          <Button
-            key={number}
-            onPress={() => onPageChange(number)}
-            isDisabled={number === page}
-          >
-            {number}
-          </Button>
-        ))}
-        <Button
-          onPress={() => onPageChange(page + 1)}
-          isDisabled={page === total}
-        >
-          {">"}
-        </Button>
-        <Button onPress={() => onPageChange(total)} isDisabled={page === total}>
-          {">>"}
-        </Button>
-      </div>
-    );
-  };
-  console.log(sortedItems, "sort");
   return (
     <div>
       <div className="w-full flex justify-between">
-        <Input />
-        <Vmsp_banksCreateModal setRefetch={setRefetch} />
+      {topContent}
+        
+        {/* <Vmsp_banksCreateModal setRefetch={setRefetch} /> */}
       </div>
       <Table
         aria-label="Vmsp_bankss table"
@@ -245,9 +236,9 @@ export default function Vmsp_banksTable() {
         </TableBody>
       </Table>
       <div className="flex w-full justify-center">
-        <Pagination
+      <Pagination
           page={page}
-          total={pages}
+          total={totalPages}
           onPageChange={(page: any) => setPage(page)}
         />
       </div>

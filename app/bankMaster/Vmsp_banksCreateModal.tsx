@@ -29,6 +29,11 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
       body: JSON.stringify(formvalue),
     });
     if (res) {
+      setFormVal({
+        bank_code: "",
+        short_code: "",
+        bank_type: "",
+      })
       onOpenChange(false);
       setRefetch((prev: boolean) => !prev);
     }
