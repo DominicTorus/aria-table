@@ -4,8 +4,6 @@ import React from "react";
 
 export default function TorusInput(props: any) {
   const [clicked, setClicked] = useState(false);
-  const [value, setValue] = useState(props.value || "");
-
   useEffect(() => {
     toggleClicked();
     colorsBorderFn();
@@ -26,28 +24,23 @@ export default function TorusInput(props: any) {
     return "";
   };
 
-  console.log(
-    colorsBorderFn(),
-    "colorsBorderFn()",
-    colorsLabelFn(),
-    "colorsLabelFn()"
-  );
   const toggleClicked = () => {
-    if (value.length > 0) {
+    if (props.value.length > 0) {
       setClicked(false);
     } else setClicked(true);
   };
 
   const handleInputChange = (e: {
-    target: { value: string | any[]; name: string | any; type: string | any };
+    target: { value: string | any[]; name: string | any; type: any };
   }) => {
+    console.log(e.target.type);
+
     if (e.target.type == "number") {
-      setValue((prev: any) => ({
-        ...prev,
-        [e.target.name]: Number(e.target.value),
-      }));
+      props.onChange(e.target.value);
+    } else if (e.target.type == "string") {
+      props.onChange(e.target.value);
     } else {
-      setValue((prev: any) => ({
+      props.onChange((prev: any) => ({
         ...prev,
         [e.target.name]: e.target.value,
       }));
@@ -76,7 +69,9 @@ export default function TorusInput(props: any) {
         placeholder={clicked ? "" : props.placeholder}
         onClick={toggleClicked}
         onChange={handleInputChange}
-        value={value}
+        name={props.name}
+        type={props.type}
+        value={props.value}
         className={`w-[100%] bg-transparent  outline-none border-2 border-b-slate-500/30 
               border-t-transparent border-l-transparent border-r-transparent
               ${colorsBorderFn()} transition-all ease-linear duration-75 ${

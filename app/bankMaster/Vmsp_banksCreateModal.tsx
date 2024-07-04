@@ -7,14 +7,20 @@ import { Button } from "../../src/Button";
 import { Modal } from "../../src/Modal";
 import { Dialog } from "../../src/Dialog";
 import TorusInput from "../TorusComponents/TorusInput";
-
+interface Vmsp_banks {
+  bank_code: string;
+  short_code: string;
+  bank_type: string;
+}
 const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
   const [isOpen, onOpenChange] = useState(false);
-  const [formvalue, setFormVal] = useState({});
+  const [formvalue, setFormVal] = useState<Vmsp_banks>({
+    bank_code: "",
+    short_code: "",
+    bank_type: "",
+  });
 
   async function post(e: any) {
-    // e.preventDefault();
-
     const res = await fetch("http://192.168.2.94:3010/vmsp_banks", {
       method: "POST",
       headers: {
@@ -28,16 +34,6 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
     }
   }
 
-  const handleChange = (e: any) => {
-    if (e.target.type == "number") {
-      setFormVal((prev) => ({
-        ...prev,
-        [e.target.name]: Number(e.target.value),
-      }));
-    } else {
-      setFormVal((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    }
-  };
   return (
     <>
       <Button
@@ -58,39 +54,34 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
               <div className="flex flex-col gap-6 p-6">
                 <TorusInput
                   autoFocus
+                  value={formvalue.bank_code}
                   label="Bank code"
                   name="bank_code"
                   placeholder="Enter your Bank code"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
-                  onChange={(e: any) => {
-                    handleChange(e);
-                  }}
+                  type="text"
+                  onChange={setFormVal}
                 />
                 <TorusInput
-                  autoFocus
+                  value={formvalue.short_code}
                   label="Short code"
                   name="short_code"
                   placeholder="Enter your Short code"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
-                  onChange={(e: any) => {
-                    handleChange(e);
-                  }}
+                  type="text"
+                  onChange={setFormVal}
                 />
                 <TorusInput
-                  autoFocus
+                  value={formvalue.bank_type}
                   label="Bank type"
                   name="bank_type"
                   placeholder="Enter your Bank type"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
-                  onChange={(e: any) => {
-                    handleChange(e);
-                  }}
+                  type="text"
+                  onChange={setFormVal}
                 />
               </div>
               <div className="flex justify-end gap-2">

@@ -21,16 +21,16 @@ const Vmsp_banksEditModal = ({
 }) => {
   const [isOpen, onOpenChange] = useState(false);
   const [formvalue, setFormVal] = useState({});
+  // const [test, setTest] = useState("hari");
   const [fetchUser, setFetchUser] = useState(update);
 
   async function post() {
-    console.log(fetchUser);
-    return;
     console.log(id);
+    console.log(fetchUser);
 
     const url = URL + id;
     console.log(url, "URL");
-    console.log(formvalue);
+
     const res = await fetch(url, {
       method: "PATCH",
       headers: {
@@ -44,24 +44,6 @@ const Vmsp_banksEditModal = ({
       setRefetch((prev: boolean) => !prev);
     }
   }
-
-  const handleChange = (e: any) => {
-    console.log(11);
-
-    if (e.target.type == "number") {
-      setFetchUser((prev: any) => ({
-        ...prev,
-        [e.target.name]: Number(e.target.value),
-      }));
-    } else {
-      setFetchUser((prev: any) => ({
-        ...prev,
-        [e.target.name]: e.target.value,
-      }));
-    }
-  };
-  // console.log(formvalue)
-
   return (
     <>
       <span onClick={() => onOpenChange(true)}>
@@ -85,37 +67,31 @@ const Vmsp_banksEditModal = ({
                   placeholder="Enter your Bank code"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
+                  type="text"
                   // handleInputChange={(e: any) => {
                   //   handleChange(e);
                   // }}
                   onChange={setFetchUser}
                 />
                 <TorusInput
-                  autoFocus
                   value={fetchUser.short_code}
                   label="Short code"
                   name="short_code"
                   placeholder="Enter your Short code"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
-                  onChange={(e: any) => {
-                    handleChange(e);
-                  }}
+                  type="text"
+                  onChange={setFetchUser}
                 />
                 <TorusInput
-                  autoFocus
                   value={fetchUser.bank_type}
                   label="Bank type"
                   name="bank_type"
                   placeholder="Enter your Bank type"
                   //   variant='bordered'
                   //   isRequired={true}
-                  type="string"
-                  onChange={(e: any) => {
-                    handleChange(e);
-                  }}
+                  type="text"
+                  onChange={setFetchUser}
                 />
               </div>
               <div className="flex justify-end gap-2">
