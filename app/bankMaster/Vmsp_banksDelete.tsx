@@ -48,7 +48,7 @@ const Vmsp_banksDeleteModal = ({
                 <div className="flex gap-2">
                   <Button
                     className="bg-blue-500 text-white"
-                    onPressChange={post}
+                    onPress={post}
                   >
                     Yes
                   </Button>

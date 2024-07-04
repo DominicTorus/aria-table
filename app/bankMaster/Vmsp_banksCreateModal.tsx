@@ -33,7 +33,7 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
         bank_code: "",
         short_code: "",
         bank_type: "",
-      })
+      });
       onOpenChange(false);
       setRefetch((prev: boolean) => !prev);
     }
@@ -93,7 +93,14 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                 <Button
                   type="reset"
                   // variant='flat'
-                  onPress={() => onOpenChange(false)}
+                  onPress={() => {
+                    onOpenChange(false);
+                    setFormVal({
+                      bank_code: "",
+                      short_code: "",
+                      bank_type: "",
+                    });
+                  }}
                 >
                   Close
                 </Button>
