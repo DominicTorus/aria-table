@@ -72,6 +72,14 @@ const Vmsp_banksEditModal = ({
                   //   handleChange(e);
                   // }}
                   onChange={setFetchUser}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
                   value={fetchUser.short_code}
@@ -82,6 +90,14 @@ const Vmsp_banksEditModal = ({
                   //   isRequired={true}
                   type="text"
                   onChange={setFetchUser}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
                   value={fetchUser.bank_type}
@@ -92,10 +108,19 @@ const Vmsp_banksEditModal = ({
                   //   isRequired={true}
                   type="text"
                   onChange={setFetchUser}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <Button
+                  className={"bg-red-500"}
                   type="reset"
                   // variant='flat'
                   onPress={() => onOpenChange(false)}
@@ -103,6 +128,7 @@ const Vmsp_banksEditModal = ({
                   Close
                 </Button>
                 <Button
+                  className={"bg-green-500"}
                   type="submit"
                   //   color='primary'
                   //   onPress={() => onClose}

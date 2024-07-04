@@ -43,10 +43,10 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
     <>
       <Button
         onPress={() => onOpenChange(true)}
-        className="flex h-14 gap-1 bg-primary-500"
+        className="flex h-10 gap-3 bg-primary-500"
       >
         <IoMdAddCircle size={20} />
-        <span className="font-bold">Add New</span>
+        <p className="font-bold">Add New</p>
       </Button>
       <Modal
         isOpen={isOpen}
@@ -67,6 +67,14 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                   //   isRequired={true}
                   type="text"
                   onChange={setFormVal}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
                   value={formvalue.short_code}
@@ -77,6 +85,14 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                   //   isRequired={true}
                   type="text"
                   onChange={setFormVal}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
                   value={formvalue.bank_type}
@@ -87,10 +103,19 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                   //   isRequired={true}
                   type="text"
                   onChange={setFormVal}
+                  variant="fade"
+                  isDisabled={false}
+                  width="full"
+                  height="xl"
+                  radius="lg"
+                  textColor="text-black"
+                  bgColor="bg-gray-100"
+                  hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <Button
+                  className={"bg-red-500"}
                   type="reset"
                   // variant='flat'
                   onPress={() => {
@@ -105,6 +130,7 @@ const Vmsp_banksCreateModal = ({ setRefetch }: { setRefetch: any }) => {
                   Close
                 </Button>
                 <Button
+                  className={"bg-green-500"}
                   type="submit"
                   //   color='primary'
                   //   onPress={() => onClose}
