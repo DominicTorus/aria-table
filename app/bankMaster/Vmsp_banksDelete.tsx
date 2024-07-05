@@ -38,29 +38,24 @@ const Vmsp_banksDeleteModal = ({
         <Modal isOpen={onOpen} onOpenChange={onOpenChange}>
           <Dialog>
             {(onClose) => (
-              <>
-                <Heading className="flex flex-col gap-1" slot="title">
-                  Confirmation
-                </Heading>
-                <>
-                  <p> Are you sure you want to delete this record?</p>
-                </>
-                <div className="flex gap-2">
-                  <Button
-                    className="bg-blue-500 text-white"
-                    onPress={post}
-                  >
+              <div className="flex flex-col gap-6 p-2">
+                <p className="text-bold">
+                  Are you sure you want to delete this record?
+                </p>
+
+                <div className="flex gap-2 justify-end">
+                  <Button className={"bg-green-500"} onPress={post}>
                     Yes
                   </Button>
 
                   <Button
-                    className="bg-blue-500 text-white"
+                    className={"bg-red-500"}
                     onPress={() => onOpenChange(false)}
                   >
                     No
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </Dialog>
         </Modal>

@@ -129,8 +129,8 @@ export default function Vmsp_banksTable() {
     return (
       <div className="flex justify-between">
         <Input
-          className="w-full sm:max-w-[44%]"
-          placeholder="Search by name..."
+          className="w-full sm:max-w-[44%] pl-3"
+          placeholder="Search by Bank Code..."
           value={filterValue}
           // onClear={() => onClear()}
           onChange={(e) => onSearchChange(e.target.value)}
