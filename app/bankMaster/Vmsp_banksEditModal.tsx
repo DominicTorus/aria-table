@@ -50,9 +50,26 @@ const Vmsp_banksEditModal = ({
   }
   return (
     <>
-        <Button onPress={() => onOpenChange(true)} className={" p-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"}>
+      <TooltipTrigger>
+        <Button
+          onPress={() => onOpenChange(true)}
+          className={
+            " p-2 text-sm font-medium text-white bg-green-500 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+          }
+        >
           <EditIcon />
         </Button>
+        <Tooltip
+          className={
+            " p-2 text-sm font-medium text-white bg-green-500 rounded-lg shadow-sm transition-opacity"
+          }
+        >
+          <OverlayArrow>
+            <svg width={8} height={8}></svg>
+          </OverlayArrow>
+          Edit
+        </Tooltip>
+      </TooltipTrigger>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange} /*placement='top-center'*/
@@ -123,7 +140,7 @@ const Vmsp_banksEditModal = ({
               </div>
               <div className="flex justify-end gap-2">
                 <Button
-                  className={"bg-red-500"}
+                  className={"bg-red-500 hover:bg-red-800"}
                   type="reset"
                   // variant='flat'
                   onPress={() => onOpenChange(false)}
@@ -131,7 +148,7 @@ const Vmsp_banksEditModal = ({
                   Close
                 </Button>
                 <Button
-                  className={"bg-green-500"}
+                  className={"bg-green-500 hover:bg-green-800"}
                   type="submit"
                   //   color='primary'
                   //   onPress={() => onClose}

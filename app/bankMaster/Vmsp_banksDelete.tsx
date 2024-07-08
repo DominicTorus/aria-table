@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { DialogTrigger, Heading } from "react-aria-components";
+import { DialogTrigger, Heading, OverlayArrow, Tooltip, TooltipTrigger } from "react-aria-components";
 import { Dialog } from "../../src/Dialog";
 import { Button } from "../../src/Button";
 import { Modal } from "../../src/Modal";
@@ -32,14 +32,26 @@ const Vmsp_banksDeleteModal = ({
   return (
     <>
       <DialogTrigger>
-        <Button
-          onPress={() => onOpenChange(true)}
-          className={
-            " p-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
-          }
-        >
-          <DeleteIcon />
-        </Button>
+        <TooltipTrigger>
+          <Button
+            onPress={() => onOpenChange(true)}
+            className={
+              " p-2 text-sm font-medium text-white bg-red-500 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+            }
+          >
+            <DeleteIcon />
+          </Button>
+          <Tooltip
+            className={
+              " p-2 text-sm font-medium text-white bg-red-500 rounded-lg shadow-sm transition-opacity"
+            }
+          >
+            <OverlayArrow>
+              <svg width={8} height={8}></svg>
+            </OverlayArrow>
+            Delete
+          </Tooltip>
+        </TooltipTrigger>
         <Modal isOpen={onOpen} onOpenChange={onOpenChange}>
           <Dialog>
             {(onClose) => (
@@ -49,12 +61,12 @@ const Vmsp_banksDeleteModal = ({
                 </p>
 
                 <div className="flex gap-2 justify-end">
-                  <Button className={"bg-green-500"} onPress={post}>
+                  <Button className={"bg-green-500 hover:bg-green-800"} onPress={post}>
                     Yes
                   </Button>
 
                   <Button
-                    className={"bg-red-500"}
+                    className={"bg-red-500 hover:bg-red-800"}
                     onPress={() => onOpenChange(false)}
                   >
                     No
