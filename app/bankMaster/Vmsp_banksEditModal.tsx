@@ -5,7 +5,12 @@ import { useState } from "react";
 import { Button } from "../../src/Button";
 import { Modal } from "../../src/Modal";
 import { Dialog } from "../../src/Dialog";
-import { Heading } from "react-aria-components";
+import {
+  Heading,
+  OverlayArrow,
+  Tooltip,
+  TooltipTrigger,
+} from "react-aria-components";
 import TorusInput from "../TorusComponents/TorusInput";
 import { EditIcon } from "../components/icons";
 const URL = "http://192.168.2.94:3010/vmsp_banks/";
@@ -20,7 +25,6 @@ const Vmsp_banksEditModal = ({
   update: any;
 }) => {
   const [isOpen, onOpenChange] = useState(false);
-  const [formvalue, setFormVal] = useState({});
   // const [test, setTest] = useState("hari");
   const [fetchUser, setFetchUser] = useState(update);
 
@@ -46,10 +50,9 @@ const Vmsp_banksEditModal = ({
   }
   return (
     <>
-      <span onClick={() => onOpenChange(true)}>
-        <EditIcon />
-      </span>
-
+        <Button onPress={() => onOpenChange(true)} className={" p-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"}>
+          <EditIcon />
+        </Button>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange} /*placement='top-center'*/

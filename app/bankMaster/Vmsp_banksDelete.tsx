@@ -32,7 +32,7 @@ const Vmsp_banksDeleteModal = ({
   return (
     <>
       <DialogTrigger>
-        <Button onPress={() => onOpenChange(true)}>
+        <Button onPress={() => onOpenChange(true)} className={" p-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"}>
           <DeleteIcon />
         </Button>
         <Modal isOpen={onOpen} onOpenChange={onOpenChange}>
