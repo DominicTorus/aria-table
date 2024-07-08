@@ -1,4 +1,6 @@
 import React from "react";
+import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
+import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
 export type Vmsp_banks = {
   vmsp_id: number;
   bank_code: string;
@@ -34,40 +36,34 @@ export const renderCell = (
   columnKey: React.Key,
   setRefetch: any
 ) => {
-  const cellValue: any = vmsp_banks[columnKey as keyof Vmsp_banks];
   console.log(columnKey, "paramasss");
+  const cellValue: any = vmsp_banks[columnKey as keyof Vmsp_banks];
+  console.log(cellValue, "cellValue");
 
-  {
-    switch (columnKey) {
-      case "vmsp_id":
-        return <span>{cellValue}</span>;
-      case "bank_code":
-        return <span>{cellValue}</span>;
-      case "short_code":
-        return <span>{cellValue}</span>;
-      case "bank_type":
-        return <span>{cellValue}</span>;
-      //   case 'actions':
-      //     return (
-      //       <div className='relative flex items-center gap-4'>
-      //         <Tooltip content='Edit Record'>
-      //           <span className='cursor-pointer text-lg text-default-400 active:opacity-50'>
-      //             <Vmsp_banksEditModal
-      //               id={vmsp_banks.vmsp_id}
-      //               setRefetch={setRefetch}
-      //               update={vmsp_banks}
-      //             />
-      //           </span>
-      //         </Tooltip>
-      //         <Tooltip color='danger' content='Delete Record'>
-      //           <span className='cursor-pointer text-lg text-danger active:opacity-50'>
-      //             <Vmsp_banksDeleteModal id={vmsp_banks.vmsp_id} setRefetch={setRefetch} />
-      //           </span>
-      //         </Tooltip>
-      //       </div>
-      //     )
-      default:
-        return cellValue;
-    }
+  switch (columnKey) {
+    case "vmsp_id":
+      return <span>{cellValue}</span>;
+    case "bank_code":
+      return <span>{cellValue}</span>;
+    case "short_code":
+      return <span>{cellValue}</span>;
+    case "bank_type":
+      return <span>{cellValue}</span>;
+    case "actions":
+      return (
+        <div className="relative flex items-center gap-4">
+          <Vmsp_banksEditModal
+            id={vmsp_banks.vmsp_id}
+            update={vmsp_banks}
+            setRefetch={setRefetch}
+          />
+          <Vmsp_banksDeleteModal
+            id={vmsp_banks.vmsp_id}
+            setRefetch={setRefetch}
+          />
+        </div>
+      );
+    default:
+      return cellValue;
   }
 };

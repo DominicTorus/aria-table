@@ -1,6 +1,6 @@
 import React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { columns, Vmsp_banks } from "./columns";
+import { columns, renderCell, Vmsp_banks } from "./columns";
 import {
   Input,
   SortDescriptor,
@@ -15,8 +15,7 @@ import {
 
 import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
 import { Button } from "../../src/Button";
-import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
-import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
+
 
 export default function Vmsp_banksTable() {
   const [vmsp_bankss, setVmsp_bankss] = useState<Vmsp_banks[]>([]);
@@ -142,42 +141,7 @@ export default function Vmsp_banksTable() {
     );
   }, [filterValue, onSearchChange, onClear]);
 
-  const renderCell = (
-    vmsp_banks: Vmsp_banks,
-    columnKey: React.Key,
-    setRefetch: any
-  ) => {
-    console.log(columnKey, "paramasss");
-    const cellValue: any = vmsp_banks[columnKey as keyof Vmsp_banks];
-    console.log(cellValue, "cellValue");
-
-    switch (columnKey) {
-      case "vmsp_id":
-        return <span>{cellValue}</span>;
-      case "bank_code":
-        return <span>{cellValue}</span>;
-      case "short_code":
-        return <span>{cellValue}</span>;
-      case "bank_type":
-        return <span>{cellValue}</span>;
-      case "actions":
-        return (
-          <div className="relative flex items-center gap-4">
-            <Vmsp_banksEditModal
-              id={vmsp_banks.vmsp_id}
-              update={vmsp_banks}
-              setRefetch={setRefetch}
-            />
-            <Vmsp_banksDeleteModal
-              id={vmsp_banks.vmsp_id}
-              setRefetch={setRefetch}
-            />
-          </div>
-        );
-      default:
-        return cellValue;
-    }
-  };
+ 
   return (
     <div className="w-full flex flex-col h-full">
       <ResizableTableContainer className="max-h-full w-full overflow-auto scroll-pt-[2.281rem] relative border dark:border-zinc-600 rounded-lg p-4">
