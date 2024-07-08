@@ -1,6 +1,4 @@
-import React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { columns, renderCell, Vmsp_banks } from "./columns";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Input,
   SortDescriptor,
@@ -12,72 +10,67 @@ import {
   Cell as TableCell,
   ResizableTableContainer,
 } from "react-aria-components";
-
-import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
 import { Button } from "../../src/Button";
 
-export default function Vmsp_banksTable() {
-  const [vmsp_bankss, setVmsp_bankss] = useState<Vmsp_banks[]>([]);
+interface Props {
+  fetchData: (page: number, filterValue: string) => Promise<void>;
+  items: any[];
+  totalPages: any;
+  columns: any[]; // Define your columns structure type here
+  createModalComponent: React.ReactNode; // Component for create modal
+  editModalComponent: React.ReactNode; // Component for edit modal
+  deleteModalComponent: React.ReactNode; // Component for delete modal
+}
+
+const ResizableTable: React.FC<Props> = ({
+  fetchData,
+  items,
+  columns,
+  createModalComponent,
+  editModalComponent,
+  deleteModalComponent,
+  totalPages,
+}) => {
   const [filterValue, setFilterValue] = useState("");
-  const hasSearchFilter = Boolean(filterValue);
-  const [refetch, setRefetch] = useState(false);
-  const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
-
-  const fetchData = async (page: number, filterValue: string) => {
-    try {
-      const response = await fetch(
-        `http://192.168.2.94:3010/vmsp_banks/get?page=${page}&limit=${rowsPerPage}&filter=${filterValue}`
-      );
-      const data = await response.json();
-      console.log("Fetched data:", data); // Log the fetched data
-
-      // Verify that the data structure is as expected
-      if (
-        data &&
-        Array.isArray(data.items) &&
-        typeof data.totalPages === "number"
-      ) {
-        setVmsp_bankss(data.items);
-        setTotalPages(data.totalPages);
-      } else {
-        console.error("Unexpected data structure:", data);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-  useEffect(() => {
-    fetchData(page, filterValue);
-  }, [page, filterValue, refetch]);
-
-  const rowsPerPage = 10;
-  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+  const [sortDescriptor, setSortDescriptor] = useState<any>({
     column: "bank_code",
     direction: "ascending",
   });
-  const sortedItems = useMemo(() => {
-    return [...vmsp_bankss].sort((a: Vmsp_banks, b: Vmsp_banks) => {
-      const first = a[sortDescriptor.column as keyof Vmsp_banks] as any;
-      const second = b[sortDescriptor.column as keyof Vmsp_banks] as any;
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
 
+  useEffect(() => {
+    fetchData(page, filterValue);
+  }, [page, filterValue]);
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a: any, b: any) => {
+      const first = a[sortDescriptor.column];
+      const second = b[sortDescriptor.column];
+      const cmp = first < second ? -1 : first > second ? 1 : 0;
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
-  }, [sortDescriptor, vmsp_bankss]);
+  }, [sortDescriptor, items]);
 
-  const Pagination = ({ page, total, onPageChange }: any) => {
-    const pagesToShow = 5; // Number of pages to show around the current page
+  const Pagination = ({ page, onPageChange }: any) => {
+    const pagesToShow = 5;
     const halfPagesToShow = Math.floor(pagesToShow / 2);
-
     const startPage = Math.max(1, page - halfPagesToShow);
-    const endPage = Math.min(total, page + halfPagesToShow);
-
+    const endPage = Math.min(totalPages, page + halfPagesToShow);
     const pageNumbers: any = [];
 
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i);
     }
+
+    console.log(
+      "from pagination",
+      page,
+      pagesToShow,
+      halfPagesToShow,
+      startPage,
+      endPage,
+      pageNumbers
+    );
 
     return (
       <div className="pagination flex gap-2 items-center">
@@ -98,15 +91,37 @@ export default function Vmsp_banksTable() {
         ))}
         <Button
           onPress={() => onPageChange(page + 1)}
-          isDisabled={page === total}
+          isDisabled={page === totalPages}
         >
           {">"}
         </Button>
-        <Button onPress={() => onPageChange(total)} isDisabled={page === total}>
+        <Button
+          onPress={() => onPageChange(totalPages)}
+          isDisabled={page === totalPages}
+        >
           {">>"}
         </Button>
       </div>
     );
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "vmsp_id":
+      case "bank_code":
+      case "short_code":
+      case "bank_type":
+        return <span>{item[columnKey]}</span>;
+      case "actions":
+        return (
+          <div className="relative flex items-center gap-4">
+            {editModalComponent}
+            {deleteModalComponent}
+          </div>
+        );
+      default:
+        return item[columnKey];
+    }
   };
 
   const onSearchChange = useCallback((value?: string) => {
@@ -118,11 +133,6 @@ export default function Vmsp_banksTable() {
     }
   }, []);
 
-  const onClear = useCallback(() => {
-    setFilterValue("");
-    setPage(1);
-  }, []);
-
   const topContent = useMemo(() => {
     return (
       <div className="flex justify-between p-2">
@@ -132,10 +142,10 @@ export default function Vmsp_banksTable() {
           value={filterValue}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        <Vmsp_banksCreateModal setRefetch={setRefetch} />
+        {createModalComponent}
       </div>
     );
-  }, [filterValue, onSearchChange, onClear]);
+  }, [filterValue, onSearchChange]);
 
   return (
     <div className="w-full flex flex-col h-full gap-2">
@@ -151,28 +161,17 @@ export default function Vmsp_banksTable() {
               <TableColumn
                 id={columns.key}
                 isRowHeader={true}
-                {...(columns.key === "vmsp_id" ? { allowsSorting: true } : {})}
-                {...(columns.key === "bank_code"
-                  ? { allowsSorting: true }
-                  : {})}
-                {...(columns.key === "short_code"
-                  ? { allowsSorting: true }
-                  : {})}
-                {...(columns.key === "bank_type"
-                  ? { allowsSorting: true }
-                  : {})}
+                allowsSorting={true} // Assuming all columns can be sorted
               >
                 {columns.label}
               </TableColumn>
             )}
           </TableHeader>
           <TableBody items={sortedItems}>
-            {(vmsp_banks) => (
-              <TableRow id={vmsp_banks?.vmsp_id} columns={columns}>
+            {(item) => (
+              <TableRow id={item.vmsp_id} columns={columns}>
                 {(columnKey: any) => (
-                  <TableCell>
-                    {renderCell(vmsp_banks, columnKey.key, setRefetch)}
-                  </TableCell>
+                  <TableCell>{renderCell(item, columnKey.key)}</TableCell>
                 )}
               </TableRow>
             )}
@@ -182,10 +181,12 @@ export default function Vmsp_banksTable() {
       <div className="flex w-full justify-center">
         <Pagination
           page={page}
-          total={totalPages}
-          onPageChange={(page: any) => setPage(page)}
+          total={5} // Replace with actual total pages
+          onPageChange={(page: number) => setPage(page)}
         />
       </div>
     </div>
   );
-}
+};
+
+export default ResizableTable;
