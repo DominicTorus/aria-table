@@ -1,9 +1,7 @@
 "use client";
 import React from "react";
 import ResizableTable from "./Vmsp_banksTable";
-import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
-import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
-import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
+
 import { useEffect, useMemo, useState } from "react";
 import { columns, Vmsp_banks } from "./columns";
 import { SortDescriptor } from "react-aria-components";
@@ -64,9 +62,7 @@ const TestComps = () => {
         items={sortedItems}
         fetchData={fetchData}
         columns={columns}
-        createModalComponent={<Vmsp_banksCreateModal setRefetch={setRefetch} />}
-        editModalComponent={<Vmsp_banksEditModal setRefetch={setRefetch} />}
-        deleteModalComponent={<Vmsp_banksDeleteModal setRefetch={setRefetch} />}
+        setRefetch={setRefetch}
       />
     </div>
   );

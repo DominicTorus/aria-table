@@ -141,43 +141,49 @@ export default function Vmsp_banksTable() {
     <div className="w-full flex flex-col h-full gap-2">
       {topContent}
       <ResizableTableContainer className="max-h-full w-full overflow-auto scroll-pt-[2.281rem] relative border dark:border-zinc-600 rounded-lg">
-        <Table
-          aria-label="Vmsp_bankss table"
-          sortDescriptor={sortDescriptor}
-          onSortChange={setSortDescriptor}
-        >
-          <TableHeader columns={columns}>
-            {(columns) => (
-              <TableColumn
-                id={columns.key}
-                isRowHeader={true}
-                {...(columns.key === "vmsp_id" ? { allowsSorting: true } : {})}
-                {...(columns.key === "bank_code"
-                  ? { allowsSorting: true }
-                  : {})}
-                {...(columns.key === "short_code"
-                  ? { allowsSorting: true }
-                  : {})}
-                {...(columns.key === "bank_type"
-                  ? { allowsSorting: true }
-                  : {})}
-              >
-                {columns.label}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody items={sortedItems}>
-            {(vmsp_banks) => (
-              <TableRow id={vmsp_banks?.vmsp_id} columns={columns}>
-                {(columnKey: any) => (
-                  <TableCell>
-                    {renderCell(vmsp_banks, columnKey.key, setRefetch)}
-                  </TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        {sortedItems.length ? (
+          <Table
+            aria-label="Vmsp_bankss table"
+            sortDescriptor={sortDescriptor}
+            onSortChange={setSortDescriptor}
+          >
+            <TableHeader columns={columns}>
+              {(columns) => (
+                <TableColumn
+                  id={columns.key}
+                  isRowHeader={true}
+                  {...(columns.key === "vmsp_id"
+                    ? { allowsSorting: true }
+                    : {})}
+                  {...(columns.key === "bank_code"
+                    ? { allowsSorting: true }
+                    : {})}
+                  {...(columns.key === "short_code"
+                    ? { allowsSorting: true }
+                    : {})}
+                  {...(columns.key === "bank_type"
+                    ? { allowsSorting: true }
+                    : {})}
+                >
+                  {columns.label}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={sortedItems}>
+              {(vmsp_banks) => (
+                <TableRow id={vmsp_banks?.vmsp_id} columns={columns}>
+                  {(columnKey: any) => (
+                    <TableCell>
+                      {renderCell(vmsp_banks, columnKey.key, setRefetch)}
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        ) : (
+          <h2 className="flex w-full justify-center">No data available</h2>
+        )}
       </ResizableTableContainer>
       <div className="flex w-full justify-center">
         <Pagination

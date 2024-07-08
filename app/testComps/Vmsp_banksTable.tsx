@@ -11,25 +11,23 @@ import {
   ResizableTableContainer,
 } from "react-aria-components";
 import { Button } from "../../src/Button";
-
+import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
+import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
+import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
 interface Props {
   fetchData: (page: number, filterValue: string) => Promise<void>;
   items: any[];
   totalPages: any;
   columns: any[]; // Define your columns structure type here
-  createModalComponent: React.ReactNode; // Component for create modal
-  editModalComponent: React.ReactNode; // Component for edit modal
-  deleteModalComponent: React.ReactNode; // Component for delete modal
+  setRefetch: any;
 }
 
 const ResizableTable: React.FC<Props> = ({
   fetchData,
   items,
   columns,
-  createModalComponent,
-  editModalComponent,
-  deleteModalComponent,
   totalPages,
+  setRefetch,
 }) => {
   const [filterValue, setFilterValue] = useState("");
   const [page, setPage] = useState(1);
@@ -115,8 +113,12 @@ const ResizableTable: React.FC<Props> = ({
       case "actions":
         return (
           <div className="relative flex items-center gap-4">
-            {editModalComponent}
-            {deleteModalComponent}
+            <Vmsp_banksEditModal
+              id={item.vmsp_id}
+              setRefetch={setRefetch}
+              update={item}
+            />
+            <Vmsp_banksDeleteModal id={item.vmsp_id} setRefetch={setRefetch} />
           </div>
         );
       default:
@@ -142,7 +144,7 @@ const ResizableTable: React.FC<Props> = ({
           value={filterValue}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        {createModalComponent}
+        <Vmsp_banksCreateModal setRefetch={setRefetch} />
       </div>
     );
   }, [filterValue, onSearchChange]);
@@ -151,32 +153,36 @@ const ResizableTable: React.FC<Props> = ({
     <div className="w-full flex flex-col h-full gap-2">
       {topContent}
       <ResizableTableContainer className="max-h-full w-full overflow-auto scroll-pt-[2.281rem] relative border dark:border-zinc-600 rounded-lg">
-        <Table
-          aria-label="Vmsp_bankss table"
-          sortDescriptor={sortDescriptor}
-          onSortChange={setSortDescriptor}
-        >
-          <TableHeader columns={columns}>
-            {(columns) => (
-              <TableColumn
-                id={columns.key}
-                isRowHeader={true}
-                allowsSorting={true} // Assuming all columns can be sorted
-              >
-                {columns.label}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody items={sortedItems}>
-            {(item) => (
-              <TableRow id={item.vmsp_id} columns={columns}>
-                {(columnKey: any) => (
-                  <TableCell>{renderCell(item, columnKey.key)}</TableCell>
-                )}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        {sortedItems.length ? (
+          <Table
+            aria-label="Vmsp_bankss table"
+            sortDescriptor={sortDescriptor}
+            onSortChange={setSortDescriptor}
+          >
+            <TableHeader columns={columns}>
+              {(columns) => (
+                <TableColumn
+                  id={columns.key}
+                  isRowHeader={true}
+                  allowsSorting={true} // Assuming all columns can be sorted
+                >
+                  {columns.label}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody items={sortedItems}>
+              {(item) => (
+                <TableRow id={item.vmsp_id} columns={columns}>
+                  {(columnKey: any) => (
+                    <TableCell>{renderCell(item, columnKey.key)}</TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        ) : (
+          <h2 className="flex w-full justify-center">No data available</h2>
+        )}
       </ResizableTableContainer>
       <div className="flex w-full justify-center">
         <Pagination
