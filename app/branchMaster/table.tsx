@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { columns, renderCell, tableData } from "./columns";
@@ -93,7 +94,7 @@ const TableComponent = () => {
             </TableHeader>
             <TableBody items={SortedItems}>
               {(tableData) => (
-                <TableRow  columns={columns}>  
+                <TableRow  id={tableData.vmsp_id} columns={columns}>  
                   {(columnKey: any) => (
                     <TableCell>
                       {renderCell(tableData, columnKey.key, setRefetch)}
