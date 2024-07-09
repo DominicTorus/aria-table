@@ -1,7 +1,7 @@
 import React from "react";
 import { useCallback, useMemo } from "react";
 import { Input } from "react-aria-components";
-import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
+import CreateModal from "./CreateModal";
 interface TopContentProps {
   filterValue?: string;
   setRefetch?: any;
@@ -36,7 +36,7 @@ export default function TopContent({
           value={filterValue}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        <Vmsp_banksCreateModal setRefetch={setRefetch} />
+        <CreateModal setRefetch={setRefetch} />
       </div>
     );
   }, [filterValue, onSearchChange, onClear]);

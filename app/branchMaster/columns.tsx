@@ -1,11 +1,11 @@
 import React from "react";
-import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
-import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
-export type Vmsp_banks = {
-  vmsp_id: number;
-  bank_code: string;
-  short_code: string;
-  bank_type: string;
+import EditModal from "./EditModal";
+import DeleteModal from "./DeleteModal";
+export type tableData = {
+  vmsp_id?: number;
+  bank_code?: string;
+  short_code?: string;
+  bank_type?: string;
 };
 
 export const columns = [
@@ -32,14 +32,12 @@ export const columns = [
 ];
 
 export const renderCell = (
-  vmsp_banks: Vmsp_banks,
+  tableData: tableData,
   columnKey: React.Key,
   setRefetch: any
 ) => {
-  console.log(columnKey, "paramasss");
-  const cellValue: any = vmsp_banks[columnKey as keyof Vmsp_banks];
-  console.log(cellValue, "cellValue");
-
+  const cellValue: any = tableData[columnKey as keyof tableData];
+  
   switch (columnKey) {
     case "vmsp_id":
       return <span>{cellValue}</span>;
@@ -52,13 +50,13 @@ export const renderCell = (
     case "actions":
       return (
         <div className="relative flex items-center gap-4">
-          <Vmsp_banksEditModal
-            id={vmsp_banks.vmsp_id}
-            update={vmsp_banks}
+          <EditModal
+            id={tableData.vmsp_id}
+            update={tableData}
             setRefetch={setRefetch}
           />
-          <Vmsp_banksDeleteModal
-            id={vmsp_banks.vmsp_id}
+          <DeleteModal
+            id={tableData.vmsp_id}
             setRefetch={setRefetch}
           />
         </div>

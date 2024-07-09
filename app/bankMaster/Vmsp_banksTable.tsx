@@ -1,6 +1,6 @@
 import React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { columns, renderCell, Vmsp_banks } from "./columns";
+import { columns, renderCell, tableData } from "./columns";
 import {
   Input,
   SortDescriptor,
@@ -17,7 +17,7 @@ import Vmsp_banksCreateModal from "./Vmsp_banksCreateModal";
 import { Button } from "../../src/Button";
 
 export default function Vmsp_banksTable() {
-  const [vmsp_bankss, setVmsp_bankss] = useState<Vmsp_banks[]>([]);
+  const [tableData, setTableData] = useState<tableData[]>([]);
   const [filterValue, setFilterValue] = useState("");
   const hasSearchFilter = Boolean(filterValue);
   const [refetch, setRefetch] = useState(false);
@@ -38,7 +38,7 @@ export default function Vmsp_banksTable() {
         Array.isArray(data.items) &&
         typeof data.totalPages === "number"
       ) {
-        setVmsp_bankss(data.items);
+        setTableData(data.items);
         setTotalPages(data.totalPages);
       } else {
         console.error("Unexpected data structure:", data);
@@ -57,14 +57,14 @@ export default function Vmsp_banksTable() {
     direction: "ascending",
   });
   const sortedItems = useMemo(() => {
-    return [...vmsp_bankss].sort((a: Vmsp_banks, b: Vmsp_banks) => {
-      const first = a[sortDescriptor.column as keyof Vmsp_banks] as any;
-      const second = b[sortDescriptor.column as keyof Vmsp_banks] as any;
+    return [...tableData].sort((a: tableData, b: tableData) => {
+      const first = a[sortDescriptor.column as keyof tableData] as any;
+      const second = b[sortDescriptor.column as keyof tableData] as any;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
-  }, [sortDescriptor, vmsp_bankss]);
+  }, [sortDescriptor, tableData]);
 
   const Pagination = ({ page, total, onPageChange }: any) => {
     const pagesToShow = 5; // Number of pages to show around the current page
@@ -143,7 +143,7 @@ export default function Vmsp_banksTable() {
       <ResizableTableContainer className="max-h-full w-full overflow-auto scroll-pt-[2.281rem] relative border dark:border-zinc-600 rounded-lg">
         {sortedItems.length ? (
           <Table
-            aria-label="Vmsp_bankss table"
+            aria-label="Label of the Table"
             sortDescriptor={sortDescriptor}
             onSortChange={setSortDescriptor}
           >
@@ -152,18 +152,10 @@ export default function Vmsp_banksTable() {
                 <TableColumn
                   id={columns.key}
                   isRowHeader={true}
-                  {...(columns.key === "vmsp_id"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "bank_code"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "short_code"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "bank_type"
-                    ? { allowsSorting: true }
-                    : {})}
+                  
+                  {...(columns.key === "actions"
+                    ? { allowsSorting: false }
+                    : { allowsSorting: true })}
                 >
                   {columns.label}
                 </TableColumn>

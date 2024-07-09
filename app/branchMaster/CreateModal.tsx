@@ -1,91 +1,64 @@
-"use client";
 import React from "react";
+import { Heading } from "react-aria-components";
 import { useState } from "react";
-
+import { IoMdAddCircle } from "react-icons/io";
 import { Button } from "../../src/Button";
 import { Modal } from "../../src/Modal";
 import { Dialog } from "../../src/Dialog";
-import {
-  Heading,
-  OverlayArrow,
-  Tooltip,
-  TooltipTrigger,
-} from "react-aria-components";
 import TorusInput from "../TorusComponents/TorusInput";
-import { EditIcon } from "../components/icons";
-const URL = "http://192.168.2.94:3010/vmsp_banks/";
+import { tableData } from "./columns";
 
-const Vmsp_banksEditModal = ({
-  id,
-  setRefetch,
-  update,
-}: {
-  id: any;
-  setRefetch: any;
-  update: any;
-}) => {
+
+const CreateModal = ({ setRefetch }: { setRefetch: any }) => {
   const [isOpen, onOpenChange] = useState(false);
-  const [fetchUser, setFetchUser] = useState(update);
+  const [formvalue, setFormVal] = useState<tableData>({
+    bank_code: "",
+    short_code: "",
+    bank_type: "",
+  });
 
-  async function post() {
-    console.log(id);
-    console.log(fetchUser);
-
-    const url = URL + id;
-    console.log(url, "URL");
-
-    const res = await fetch(url, {
-      method: "PATCH",
+  async function post(e: any) {
+    const res = await fetch("http://192.168.2.94:3010/vmsp_banks", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(fetchUser),
+      body: JSON.stringify(formvalue),
     });
-    console.log(res);
     if (res) {
+      setFormVal({
+        bank_code: "",
+        short_code: "",
+        bank_type: "",
+      });
       onOpenChange(false);
       setRefetch((prev: boolean) => !prev);
     }
   }
+
   return (
     <>
-      <TooltipTrigger>
-        <Button
-          onPress={() => onOpenChange(true)}
-          className={
-            " p-2 text-sm font-medium text-white bg-green-500 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
-          }
-        >
-          <EditIcon />
-        </Button>
-        <Tooltip
-          className={
-            " p-2 text-sm font-medium text-white bg-green-500 rounded-lg shadow-sm transition-opacity"
-          }
-        >
-          <OverlayArrow>
-            <svg width={8} height={8}></svg>
-          </OverlayArrow>
-          Edit
-        </Tooltip>
-      </TooltipTrigger>
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={onOpenChange} /*placement='top-center'*/
+      <Button
+        onPress={() => onOpenChange(true)}
+        className="flex h-10 w-[150px] gap-3 bg-primary-500"
       >
+        <IoMdAddCircle size={20} />
+        <p className="font-bold">Add New</p>
+      </Button>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <Dialog>
           {(onClose) => (
             <>
-              <Heading className="flex flex-col gap-1">Edit items</Heading>
+              <Heading className="flex flex-col gap-1">Add New Items</Heading>
               <div className="flex flex-col gap-6 p-6">
                 <TorusInput
-                  value={fetchUser.bank_code}
                   autoFocus
+                  value={formvalue.bank_code}
                   label="Bank code"
                   name="bank_code"
                   placeholder="Enter your Bank code"
                   type="text"
-                  onChange={setFetchUser}
+                  onChange={setFormVal}
                   variant="fade"
                   isDisabled={false}
                   width="full"
@@ -96,14 +69,12 @@ const Vmsp_banksEditModal = ({
                   hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
-                  value={fetchUser.short_code}
+                  value={formvalue.short_code}
                   label="Short code"
                   name="short_code"
                   placeholder="Enter your Short code"
-                  //   variant='bordered'
-                  //   isRequired={true}
                   type="text"
-                  onChange={setFetchUser}
+                  onChange={setFormVal}
                   variant="fade"
                   isDisabled={false}
                   width="full"
@@ -114,14 +85,12 @@ const Vmsp_banksEditModal = ({
                   hoverColor="torus-hover:bg-fuchsia-500/50"
                 />
                 <TorusInput
-                  value={fetchUser.bank_type}
+                  value={formvalue.bank_type}
                   label="Bank type"
                   name="bank_type"
                   placeholder="Enter your Bank type"
-                  //   variant='bordered'
-                  //   isRequired={true}
                   type="text"
-                  onChange={setFetchUser}
+                  onChange={setFormVal}
                   variant="fade"
                   isDisabled={false}
                   width="full"
@@ -134,21 +103,22 @@ const Vmsp_banksEditModal = ({
               </div>
               <div className="flex justify-end gap-2">
                 <Button
-                  className={"bg-red-500 hover:bg-red-800"}
+                  className={"bg-red-500"}
                   type="reset"
                   // variant='flat'
-                  onPress={() => onOpenChange(false)}
+                  onPress={() => {
+                    onOpenChange(false);
+                    setFormVal({
+                      bank_code: "",
+                      short_code: "",
+                      bank_type: "",
+                    });
+                  }}
                 >
                   Close
                 </Button>
-                <Button
-                  className={"bg-green-500 hover:bg-green-800"}
-                  type="submit"
-                  //   color='primary'
-                  //   onPress={() => onClose}
-                  onPress={() => post()}
-                >
-                  Edit
+                <Button className={"bg-green-500"} type="submit" onPress={post}>
+                  Save
                 </Button>
               </div>
             </>
@@ -159,4 +129,4 @@ const Vmsp_banksEditModal = ({
   );
 };
 
-export default Vmsp_banksEditModal;
+export default CreateModal;

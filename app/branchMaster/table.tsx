@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { columns, renderCell, Vmsp_banks } from "./columns";
+import { columns, renderCell, tableData } from "./columns";
 import {
   SortDescriptor,
   Table,
@@ -14,9 +14,9 @@ import {
 import TopContent from "./TopContent";
 import Pagination from "./Pagination";
 
-const Assemble = () => {
+const TableComponent = () => {
   const rowsPerPage = 10;
-  const [vmsp_bankss, setVmsp_bankss] = useState<Vmsp_banks[]>([]);
+  const [tableData, setTableData] = useState<tableData[]>([]);
   const [filterValue, setFilterValue] = useState("");
 
   const [refetch, setRefetch] = useState(false);
@@ -37,7 +37,7 @@ const Assemble = () => {
         Array.isArray(data.items) &&
         typeof data.totalPages === "number"
       ) {
-        setVmsp_bankss(data.items);
+        setTableData(data.items);
         setTotalPages(data.totalPages);
       } else {
         console.error("Unexpected data structure:", data);
@@ -55,14 +55,14 @@ const Assemble = () => {
     direction: "ascending",
   });
   const SortedItems = useMemo(() => {
-    return [...vmsp_bankss].sort((a: Vmsp_banks, b: Vmsp_banks) => {
-      const first = a[sortDescriptor.column as keyof Vmsp_banks] as any;
-      const second = b[sortDescriptor.column as keyof Vmsp_banks] as any;
+    return [...tableData].sort((a: tableData, b: tableData) => {
+      const first = a[sortDescriptor.column as keyof tableData] as any;
+      const second = b[sortDescriptor.column as keyof tableData] as any;
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
-  }, [sortDescriptor, vmsp_bankss]);
+  }, [sortDescriptor, tableData]);
 
   return (
     <div className="w-full flex flex-col h-full gap-2">
@@ -74,7 +74,7 @@ const Assemble = () => {
       <ResizableTableContainer className="max-h-full w-full overflow-auto scroll-pt-[2.281rem] relative border dark:border-zinc-600 rounded-lg">
         {SortedItems.length ? (
           <Table
-            aria-label="Vmsp_bankss table"
+            aria-label="Label of the Table"
             sortDescriptor={sortDescriptor}
             onSortChange={setSortDescriptor}
           >
@@ -83,29 +83,20 @@ const Assemble = () => {
                 <TableColumn
                   id={columns.key}
                   isRowHeader={true}
-                  {...(columns.key === "vmsp_id"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "bank_code"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "short_code"
-                    ? { allowsSorting: true }
-                    : {})}
-                  {...(columns.key === "bank_type"
-                    ? { allowsSorting: true }
-                    : {})}
+                  {...(columns.key === "actions"
+                    ? { allowsSorting: false }
+                    : { allowsSorting: true })}
                 >
                   {columns.label}
                 </TableColumn>
               )}
             </TableHeader>
             <TableBody items={SortedItems}>
-              {(vmsp_banks) => (
-                <TableRow id={vmsp_banks?.vmsp_id} columns={columns}>
+              {(tableData) => (
+                <TableRow  columns={columns}>  
                   {(columnKey: any) => (
                     <TableCell>
-                      {renderCell(vmsp_banks, columnKey.key, setRefetch)}
+                      {renderCell(tableData, columnKey.key, setRefetch)}
                     </TableCell>
                   )}
                 </TableRow>
@@ -127,4 +118,4 @@ const Assemble = () => {
   );
 };
 
-export default Assemble;
+export default TableComponent;

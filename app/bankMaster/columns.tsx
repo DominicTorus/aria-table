@@ -2,7 +2,7 @@ import React from "react";
 import Vmsp_banksEditModal from "./Vmsp_banksEditModal";
 import Vmsp_banksDeleteModal from "./Vmsp_banksDelete";
 import { OverlayArrow, Tooltip, TooltipTrigger } from "react-aria-components";
-export type Vmsp_banks = {
+export type tableData = {
   vmsp_id: number;
   bank_code: string;
   short_code: string;
@@ -33,12 +33,12 @@ export const columns = [
 ];
 
 export const renderCell = (
-  vmsp_banks: Vmsp_banks,
+  tableData: tableData,
   columnKey: React.Key,
   setRefetch: any
 ) => {
   console.log(columnKey, "paramasss");
-  const cellValue: any = vmsp_banks[columnKey as keyof Vmsp_banks];
+  const cellValue: any = tableData[columnKey as keyof tableData];
   console.log(cellValue, "cellValue");
 
   switch (columnKey) {
@@ -54,12 +54,12 @@ export const renderCell = (
       return (
         <div className="relative flex items-center gap-4">
             <Vmsp_banksEditModal
-              id={vmsp_banks.vmsp_id}
-              update={vmsp_banks}
+              id={tableData.vmsp_id}
+              update={tableData}
               setRefetch={setRefetch}
             />
             <Vmsp_banksDeleteModal
-              id={vmsp_banks.vmsp_id}
+              id={tableData.vmsp_id}
               setRefetch={setRefetch}
             />
         </div>

@@ -12,7 +12,7 @@ import { Button } from "../../src/Button";
 import { Modal } from "../../src/Modal";
 
 import { DeleteIcon } from "../components/icons";
-const Vmsp_banksDeleteModal = ({
+const DeleteModal = ({
   id,
   setRefetch,
 }: {
@@ -89,4 +89,4 @@ const Vmsp_banksDeleteModal = ({
   );
 };
 
-export default Vmsp_banksDeleteModal;
+export default DeleteModal;

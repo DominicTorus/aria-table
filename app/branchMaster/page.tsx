@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import Assemble from "./Assemble";
-export default async function Vmsp_banks() {
+import TableComponent from "./table";
+export default async function Page() {
   return (
     <div className="w-full h-screen">
-      <Assemble />
+      <TableComponent />
     </div>
   );
 }
