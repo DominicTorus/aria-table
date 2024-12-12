@@ -1,0 +1,142 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final int length;
+  final String hintText;
+  final Function(String) onCompleted;
+  final PinInputSize size;
+  final PinInputVariant variant;
+
+  const <%= relation[0] %>({
+    Key? key,
+    this.length = 4,
+    this.hintText = '',
+    required this.onCompleted,
+    this.size = PinInputSize.md,
+    this.variant = PinInputVariant.underlined,
+  }) : super(key: key);
+
+  @override
+  _<%= relation[0] %>State createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  final List<TextEditingController> _controllers = [];
+  final FocusNode _focusNode = FocusNode();
+  String _otp = '';
+
+  @override
+  void initState() {
+    super.initState();
+    for (int i = 0; i < widget.length; i++) {
+      _controllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onChanged(String value, int index) {
+    if (value.length == 1) {
+      _otp += value;
+      if (index < widget.length - 1) {
+        FocusScope.of(context).nextFocus();
+      }
+    } else {
+      if (_otp.isNotEmpty) {
+        _otp = _otp.substring(0, _otp.length - 1);
+        if (index > 0) {
+          FocusScope.of(context).previousFocus();
+        }
+      }
+    }
+
+    if (_otp.length == widget.length) {
+      widget.onCompleted(_otp);
+    }
+  }
+
+  BoxDecoration _getDecoration() {
+    switch (widget.variant) {
+      case PinInputVariant.underlined:
+        return BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey, width: 1.0),
+          ),
+        );
+      case PinInputVariant.outline:
+        return BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(4.0),
+        );
+      case PinInputVariant.rounded:
+        return BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(50.0),
+        );
+      default:
+        return BoxDecoration();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double height;
+    double width;
+
+    switch (widget.size) {
+      case PinInputSize.xl:
+        height = 60;
+        width = 40;
+        break;
+      case PinInputSize.lg:
+        height = 50;
+        width = 40;
+        break;
+      case PinInputSize.md:
+        height = 40;
+        width = 40;
+        break;
+      case PinInputSize.sm:
+        height = 35;
+        width = 40;
+        break;
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(widget.length, (index) {
+          return Container(
+            height: height,
+            width: width,
+            margin: const EdgeInsets.symmetric(horizontal: 5),
+            decoration: _getDecoration(),
+            child: TextField(
+              controller: _controllers[index],
+              focusNode: index == 0 ? _focusNode : null,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: widget.hintText,
+                hintStyle: TextStyle(color: Colors.grey),
+                counterText: '',
+                border: InputBorder.none,
+              ),
+              onChanged: (value) => _onChanged(value, index),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}

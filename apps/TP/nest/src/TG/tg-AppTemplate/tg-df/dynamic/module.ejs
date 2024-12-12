@@ -1,0 +1,21 @@
+<%_ let tabName = data _%>
+import { Module } from "@nestjs/common";
+import { <%= tabName %>Controller } from "./<%= tabName %>.controller";
+import { <%= tabName %>Service } from "./<%= tabName %>.service";
+import { PrismaService } from "src/prisma.service";
+import { AbilityModule } from "src/ability/ability.module";
+import { JwtModule } from "@nestjs/jwt";
+import { JwtServices } from "src/jwt.service";
+import { RedisService } from "src/redisService";
+import { CommonService } from "src/commonService";
+
+@Module({
+     imports: [AbilityModule,JwtModule.register({
+          secret: process.env.JWT_SECRET,
+          signOptions: { expiresIn: '1d' },
+        })],
+     controllers: [<%= tabName %>Controller],
+     providers: [<%= tabName %>Service, PrismaService,JwtServices,RedisService,CommonService]
+})
+export class <%= tabName %>Module{}
+

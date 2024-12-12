@@ -1,0 +1,44 @@
+<%_ const formatString = (str) => str.toLowerCase().split(' ').join('_'); _%>
+
+// EXPORT ALL SCREENS AND WIDGETS
+<%_ if (data.length > 0) { _%>
+    <%_ data.forEach((screen) => { _%>
+export './screens/<%= formatString(screen) %>/<%= formatString(screen) %>.dart';
+    <%_ if (data1[screen] && data1[screen].length > 0) { _%>
+        <%_ data1[screen].forEach((widget) => { _%>
+export './screens/<%= formatString(screen) %>/widgets/<%= widget %>';
+        <%_ }) _%>
+    <%_ } _%>
+    <%_ }) _%>
+<%_ } _%>
+
+// APP LOGIN
+export 'auth/app_login.dart';
+export './auth/secure_storage/secure_storage.dart';
+
+// EXPORT UTILS
+export 'dart:convert';
+export './utils/common.dart';
+export './utils/constants.dart';
+export './utils/apiservices.dart';
+export './utils/utils_services.dart';
+
+// ENUMS
+export './utils/enums/enum_datepicker.dart';
+export './utils/enums/enum_dropdown.dart';
+export './utils/enums/enum_list.dart';
+export './utils/enums/enum_pininput.dart';
+export './utils/enums/enum_table.dart';
+export './utils/enums/enum_timepicker.dart';
+
+// EXPORT WIDGETS
+export '../widgets/layout/appbar.dart';
+export '../widgets/layout/vStack.dart';
+export '../widgets/layout/hStack.dart';
+
+// PACKAGE
+export 'package:provider/provider.dart';
+export 'providers/provider.dart';
+export 'package:gluestack_ui/gluestack_ui.dart';
+export 'package:flutter_dotenv/flutter_dotenv.dart';
+export 'package:toastification/toastification.dart';

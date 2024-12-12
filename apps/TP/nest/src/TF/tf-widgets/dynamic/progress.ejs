@@ -1,0 +1,31 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final double value;
+  final GSProgressSizes size;
+  final Color? color;
+  final Color? bg;
+
+  const <%= relation[0] %>({
+    super.key,
+    this.value = 0.8,
+    this.size = GSProgressSizes.$md,
+    this.color,
+    this.bg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSProgress(
+      value: value,
+      size: size,
+      semanticsLabel: value.toString(),
+      style: GSStyle(
+        color: color,
+        bg: bg,
+      ),
+    );
+  }
+}

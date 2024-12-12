@@ -1,0 +1,736 @@
+"use client"
+<%_ let nodesElementInfo = data.elementInfo _%>
+<%_ let nodes = data  _%>
+<%_ let ufKey = data1[0].ufKey _%>
+<%_ let pfKey = data1[0].pfKey _%>
+<%_ let sfKey = data1[0].sfKey _%>
+<%_ let stateAndSetStatePre = data1[3] _%>
+<%_ let eventDetailsArray = data1[1] _%>
+<%_ let eventDetailsObj = data1[2] _%>
+<%_ let nodesAll = data1[4] _%>
+<%_ let compDetailsLabel = data2.label _%>
+<%_ let compDetailsID = data2.componentsId _%>
+<%_ let Pagination = false;  _%>
+<%_ let Search = false;  _%>
+<%_ let TableActions = false;  _%>
+<%_ let TableSelection = false;  _%>
+<%_ let TableSettings = false;  _%>
+<%_ let TableSorting = false;  _%>
+<%_ let needLocking = false;  _%>
+<%_ let StateName=""_%>
+<%_ let SetStateName=""_%>
+<%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+  <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+    <%_ if (nodesAll[i].label === compDetailsLabel) { _%>
+      <%_ StateName=nodesAll[i].label + nodesAll[i].id.slice(-5) _%>
+      <%_ SetStateName="set"+nodesAll[i].label + nodesAll[i].id.slice(-5) _%>
+      <%_ } _%> 
+    <%_ } _%>  
+  <%_ } _%>
+<%_for(let i=0;i<nodesElementInfo.props.length;i++){  _%>
+  <%_if(nodesElementInfo.props[i].name === "pagination" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ Pagination = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "search" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ Search = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "tableActions" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ TableActions ="true";  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "tableSelection" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ TableSelection = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "tableSettings" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ TableSettings = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "tableSorting" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+    <%_ TableSorting = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+  <%_if(nodesElementInfo.props[i].name === "needLocking" && nodesElementInfo.props[i].enum.selectedValue.length){  _%>
+    <%_ needLocking = nodesElementInfo.props[i].enum.selectedValue[0];  _%>
+  <%_ } _%>
+<%_ } _%>
+  <%_if(Pagination=='true'){  _%>
+ import { Button, Modal, Pagination, PaginationProps, TextInput } from '@gravity-ui/uikit'
+
+  <%_ } _%>
+  <%_if(Search=='true'){  _%>
+import TableTopContent from '@/app/components/TableTopContent'
+  <%_ } _%>
+<%_if(TableActions=='true'){  _%>
+  <%_for(let i=0;i<nodesElementInfo.props.length;i++){  _%>
+    <%_if(nodesElementInfo.props[i].name === "tableActions" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+      <%_if(nodesElementInfo.props[i].enum.selectedValue.includes("*") || nodesElementInfo.props[i].enum.selectedValue.includes("edit")){  _%>
+import EditData from '@/app/components/EditTableData'
+      <%_ } _%>
+      <%_if(nodesElementInfo.props[i].enum.selectedValue.includes("*") || nodesElementInfo.props[i].enum.selectedValue.includes("delete")){  _%>
+import DeleteData from '@/app/components/DeleteData'
+      <%_ } _%>
+    <%_ } _%>
+  <%_ } _%>
+<%_ } _%>
+import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import {
+  Col,
+  Flex,
+  Row,
+  Table,
+  TableDataItem,
+  TableProps,
+  withTableSettings,
+  WithTableSettingsProps,
+  withTableSorting,
+  withTableSelection,
+  WithTableSelectionProps,
+  RenderRowActionsProps,
+  withTableActions,
+  WithTableActionsProps
+} from '@gravity-ui/uikit'
+import { DatePicker } from '@gravity-ui/date-components'
+import axios from 'axios'
+import React, { useEffect, useState,useContext } from 'react'
+import { AxiosService } from '@/app/components/axiosService'
+import { useInfoMsg } from '@/app/torusStaticHandlers/infoMsgHandler'
+import { getCookie } from "@/app/components/cookieMgment"
+import { nullFilter } from '@/app/utils/nullDataFilter';
+import { codeExecution } from '@/app/utils/codeExecution'
+import { uf_fetchActionDetailsDto,uf_fetchRuleDetailsDto,te_refreshDto,api_paginationDto,uf_paginationDataFilterDto } from '@/app/interfaces/interfaces';
+const MyTable: React.ComponentType<
+  TableProps<TableDataItem> &
+    <%_ if(TableSettings=='true'){  _%>
+      WithTableSettingsProps &
+    <%_ } _%>
+   
+    <%_ if(TableSelection=='true'){  _%>
+    WithTableSelectionProps<TableDataItem> &
+  <%_ } _%>
+    WithTableActionsProps<TableDataItem>|any
+> =
+<%_ if(TableSettings=='true'){  _%>
+  withTableSettings
+<%_ } _%>
+(
+  withTableSorting(
+    <%_ if(TableSelection=='true'){  _%>
+      withTableSelection
+  <%_ } _%>
+  (withTableActions(Table)))
+)
+let defaultColumns = 
+<%- JSON.stringify(relation, null, 2)  %> ;
+for (let i = 0; i < defaultColumns.length; i++) {
+  defaultColumns[i].id = defaultColumns[i].id.toLowerCase();
+}
+function objectToQueryString(obj: any) {
+  return Object.keys(obj)
+    .map(key => {
+      // Determine the modifier based on the type of the value
+      const value = obj[key];
+      let modifiedKey = key;
+
+      if (typeof value === 'string') {
+        modifiedKey += '-contains';  // Append '-contains' if value is a string
+      } else if (typeof value === 'number') {
+        modifiedKey += '-equals';    // Append '-equals' if value is a number
+      }
+
+      // Return the key-value pair with the modified key
+      return `${encodeURIComponent(modifiedKey)}=${encodeURIComponent(value)}`;
+    })
+    .join('&');
+}
+
+<%_ let columnStart = nodes.grid.column.start  _%>  
+<%_ let columnEnd = nodes.grid.column.end  _%>
+<%_ let rowStart = nodes.grid.row.start  _%>
+<%_ let rowEnd = nodes.grid.row.end  _%>
+<%_ let gap = nodes.grid.style.gap  _%>
+const Table<%= nodes.label %>=({ /*<%_ for(let i=0;i<stateAndSetStatePre.length;i++) { _%> <%= Object.keys(stateAndSetStatePre[i])[0] %>, <%= stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]] %>,<%_} _%>*/lockedData,setLockedData,primaryTableData, setPrimaryTableData,refetch, setRefetch,setData }: any)=>{
+const upId: string | any = getCookie('upId')
+let dfKey: string | any
+const toast =useInfoMsg()
+const token: string | any = getCookie('token')
+<%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+  <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+    const {<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>, set<%= nodesAll[i].label %><%= nodesAll[i].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps
+    <%_ } _%>  
+  <%_ } _%>
+  const [open, setOpen] = React.useState(false);
+const [paginationData, setPaginationData] = React.useState({
+  page: 0,
+  pageSize: 0,
+  total: 0
+})
+const [SearParams,setSearchParams] = useState<any>({})
+<%_if(needLocking=='true'){  _%>
+  const [needLocking, setNeedLocking] = useState({
+    lockMode: 'Single',
+    ttl: ''
+  })
+  const setLockMode=(ids:any)=>{
+    let postIds: any = []
+    let processIds: any = []
+    if(needLocking.lockMode=='Single'){
+      if (ids.length == 0) {
+        <%_if(eventDetailsArray){  _%>
+          <%_if(eventDetailsArray[1]?.name){  _%>  
+              <%_ for (let event = 2  ; event < eventDetailsArray.length; event++) {_%>
+                <%_ if (eventDetailsArray[event].eventContext === "riseListen" && eventDetailsArray[event].type === "handlerNode" && eventDetailsArray[event].name.toLowerCase() === 'bindtran') { _%>
+          let keys: any = {}
+          <%_ for (let i = 0; i < nodesAll.length; i++) { _%>          
+          <%_ if (eventDetailsArray[event+1].name === nodesAll[i].label) { _%>          
+            Object.keys(<%= eventDetailsArray[event+1].name %><%= nodesAll[i].id.slice(-5)  %>).map((item: any) => {
+              keys[item] = null
+            }) 
+            set<%= eventDetailsArray[event+1].name %><%= nodesAll[i].id.slice(-5)  %>(keys)
+          <%_ } _%>  
+          <%_ } _%>
+          <%_ } _%> 
+              <%_ } _%>
+          <%_ } _%>
+        <%_ } _%>
+       
+       
+        setSelectedIds([])
+        return
+      }
+
+      <%= compDetailsLabel%><%= compDetailsID.slice(-5) %>.filter((item:any,id:number)=>{
+        if (ids[ids.length - 1] == id.toString()){
+        postIds.push(item.<%= nodesElementInfo.primaryKey  %>)
+        processIds.push(item?.process_id)
+        }
+      })
+      setSelectedIds([ids[ids.length-1]])
+    }
+    else if(needLocking.lockMode==='Multi'){
+      <%= compDetailsLabel%><%= compDetailsID.slice(-5) %>.filter((item:any,id:number)=>{
+        if (ids.includes(id.toString())){
+          postIds.push(item.<%= nodesElementInfo.primaryKey  %>)
+          processIds.push(item?.process_id)
+        } 
+      })
+      setSelectedIds(ids)
+    }
+    let checkedData: any = selectedPaginationData
+    if (checkedData.length) {
+      let itsAlreadyThere: boolean = false
+      selectedPaginationData.map((item: any) => {
+        if (item.page == paginationData.page) {
+          itsAlreadyThere = true
+        }
+      })
+      if (itsAlreadyThere) {
+        for (let i = 0; i < checkedData.length; i++) {
+          if (checkedData[i].page == paginationData.page) {
+            checkedData[i].data = ids
+            break
+          }
+        }
+      } else {
+        checkedData = [
+          ...checkedData,
+          {
+            page: paginationData.page,
+            data: ids
+          }
+        ]
+      }
+    } else {
+      checkedData.push({
+        page: paginationData.page,
+        data: ids
+      })
+    }
+    setSelectedPaginationData(checkedData)
+  <%_if(eventDetailsArray){  _%>
+    <%_if(eventDetailsArray[1]?.name){  _%>  
+        <%_ for (let event = 2  ; event < eventDetailsArray.length; event++) {_%>
+          <%_ for (let i = 0; i < nodesAll.length; i++) { _%>    
+          <%_ if (eventDetailsArray[event].eventContext === "riseListen" && eventDetailsArray[event].type === "handlerNode" && eventDetailsArray[event].name.toLowerCase() === 'bindtran' && eventDetailsArray[event+1].name === nodesAll[i].label) { _%>
+    set<%= eventDetailsArray[event+1].name %><%= nodesAll[i].id.slice(-5) %>(<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>[+ids[ids.length - 1]])
+    <%_ } _%>     
+      <%_ } _%> 
+        <%_ } _%>
+    <%_ } _%>
+  <%_ } _%>
+    setLockedData({
+      ...lockedData,
+      processIds: processIds,
+      primaryKeys: postIds,
+      lockMode: needLocking,
+      ttl: needLocking.ttl
+    })
+  }
+<%_ } _%>
+  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+  const [selectedPaginationData, setSelectedPaginationData] = useState<any[]>(
+      []
+    )
+  const [settings, setSettings] = useState<any>();
+    
+<%_if(Pagination=='true'){  _%>
+  /*const [paginationData, setPaginationData] = React.useState({
+    page: 0,
+    pageSize: 0,
+    total: 0
+  })*/
+  async function fetchNeedLocking() {
+
+    const uf_fetchActionDetailsBody:uf_fetchActionDetailsDto={
+      key:'<%=ufKey%>',
+      groupId:'<%=compDetailsID%>',
+      controlId:"<%= nodes.id%>",
+    }
+    const uf_fetchActionDetails=await AxiosService.post("/UF/fetchActionDetails",uf_fetchActionDetailsBody)
+    if(uf_fetchActionDetails?.data?.error == true){
+      toast(uf_fetchActionDetails?.data?.errorDetails?.message, 'danger')
+      return
+    }
+    if(uf_fetchActionDetails?.data){
+      <%_if(needLocking=='true'){  _%>
+      if (uf_fetchActionDetails?.data?.lockDetails?.lockMode)
+      {
+        setNeedLocking({
+          ...needLocking,
+          lockMode: uf_fetchActionDetails?.data?.lockDetails?.lockMode,
+          ttl: uf_fetchActionDetails?.data?.lockDetails?.ttl
+        })
+      }
+      <%_ } _%>
+      if (
+        uf_fetchActionDetails?.data?.paginationDetails?.count &&
+        uf_fetchActionDetails?.data?.paginationDetails?.page
+      ){
+        setPaginationData(
+          { ...paginationData, 
+            pageSize: +uf_fetchActionDetails?.data?.paginationDetails?.count,
+            page: +uf_fetchActionDetails?.data?.paginationDetails?.page
+          })
+        fetchData(+uf_fetchActionDetails?.data?.paginationDetails?.page,+uf_fetchActionDetails?.data?.paginationDetails?.count)
+      }
+    }
+  }
+  useEffect(()=>{
+    fetchNeedLocking()
+  },[])
+  const handleUpdate: PaginationProps['onUpdate'] = (page, pageSize) =>{
+    setSelectedIds([])
+    let checkedData: any = selectedPaginationData
+    if (checkedData.length) {
+      for (let i = 0; i < checkedData.length; i++) {
+        if (checkedData[i].page == page) {
+          setSelectedIds(checkedData[i].data)
+        }
+      }
+    }
+    setPaginationData(prevState => ({ ...prevState, page, pageSize }))
+    fetchData(page, pageSize)
+  }
+<%_ } _%>
+<%_if(Search=='true'){  _%>
+  const [filterValue, setFilterValue] = useState('')
+  const [filterColumn, setFilterColumn] = useState(defaultColumns[0].id)
+<%_ } _%>
+<%_if(eventDetailsArray){  _%>
+<%_if(eventDetailsArray[1]?.name){  _%>  
+  async function <%= eventDetailsArray[1]?.name  %>(e:any) {
+    <%_ for (let event = 2  ; event < eventDetailsArray.length; event++) {_%>
+      <%_ for (let i = 0; i < nodesAll.length; i++) { _%>      
+    <%_ if (eventDetailsArray[event].eventContext === "riseListen" && eventDetailsArray[event].type === "handlerNode" && eventDetailsArray[event].name.toLowerCase() === 'bindtran' && eventDetailsArray[event+1].name === nodesAll[i].label) { _%>
+      set<%= eventDetailsArray[event+1].name %><%= nodesAll[i].id.slice(-5) %>(e)
+    <%_ } _%> 
+    <%_ } _%>
+    <%_ } _%>
+    }
+<%_ } _%>
+<%_ } _%>
+<%_if(Pagination=='true'){ _%>
+  async function fetchData(page = 1, pageSize = 10) {
+    try {
+        const uf_dfKey = await AxiosService.get(
+          "/UF/dfKey?ufKey=<%=ufKey%>&groupId=<%=compDetailsID%>",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+        if(uf_dfKey?.data?.error == true){
+          toast(uf_dfKey?.data?.errorDetails?.message, 'danger')
+            return
+        }
+        dfKey = uf_dfKey?.data
+
+      let te_refreshBody:te_refreshDto = {
+      key : dfKey,
+      upId : upId
+      }
+      const te_refresh:any= await AxiosService.post("/te/refresh", te_refreshBody, {
+        headers: {
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${token}`
+        }
+      })
+      if(te_refresh?.data?.error == true){
+        toast(te_refresh?.data?.errorDetails?.message, 'danger')
+        return
+      }
+      let dstKey:any=dfKey.replace(":AFC:",":AFCP:").replace(":AF:",":AFP:").replace(":DF-DFD:",":DF-DST:");
+      let keyWithP:any=dfKey;
+
+      const uf_fetchRuleDetailsBody:uf_fetchRuleDetailsDto={
+        key:'<%=ufKey%>',
+        groupId:'<%=compDetailsID%>',
+        controlId:"<%= nodes.id%>",
+      }
+      const uf_fetchRuleDetails=await AxiosService.post("/UF/fetchRuleDetails",uf_fetchRuleDetailsBody)
+      if(uf_fetchRuleDetails?.data?.error == true){
+        toast(uf_fetchRuleDetails?.data?.errorDetails?.message, 'danger')
+        return
+      }
+      let api_pagination:any
+      if(typeof uf_fetchRuleDetails.data === 'string'){
+        const api_paginationBody:api_paginationDto = {
+          key: dstKey,
+          page:page,
+          count:pageSize,
+         
+        }
+        api_pagination = await AxiosService.post("/api/pagination",api_paginationBody )
+        if(api_pagination?.data?.error == true){
+          toast(api_pagination?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        setPaginationData(prevState => ({ ...prevState, total: api_pagination.data.totalRecords }))
+      }else {
+        const api_paginationBody:api_paginationDto = {
+          key: dstKey,
+          page:page,
+          count:pageSize,
+          filterDetails: {
+            ufKey:'<%=ufKey%>:UO', 
+            nodeId: '<%=compDetailsID%>',
+            elementId: '<%= nodesElementInfo.label %>'
+          }
+        }
+        api_pagination = await AxiosService.post("/api/pagination",api_paginationBody )
+        if(api_pagination?.data?.error == true){
+          toast(api_pagination?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        setPaginationData(prevState => ({ ...prevState, total: api_pagination.data.totalRecords }))
+      }
+      const uf_paginationDataFilterBody:uf_paginationDataFilterDto={
+        data: api_pagination.data.records,
+        key: '<%=ufKey%>',
+      }
+      const uf_paginationDataFilter = await AxiosService.post(
+        "/UF/PaginationDataFilter",
+        uf_paginationDataFilterBody
+      )
+      if(uf_paginationDataFilter?.data?.error == true){
+        toast(uf_paginationDataFilter?.data?.errorDetails?.message, 'danger')
+        return
+      }
+      if (uf_paginationDataFilter.data.length <= 0) {
+          set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>([])
+          return
+        }
+        const code = await AxiosService.post('/UF/code', {
+          key: '<%=ufKey%>',
+          group: '<%= compDetailsLabel%>'
+        })
+        if (code?.data?.error == true) {          
+          set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>(uf_paginationDataFilter.data)
+ 
+          //toast(code?.data?.errorDetails?.message, 'danger')
+          //return
+        } else {
+          if (uf_paginationDataFilter.data.length <= 0) {
+            set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>([])
+            return
+          }
+          else if (code?.data != '') {
+            let codeStates: any = {}
+            <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+              <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+                <%_ if(nodesAll[i].label === compDetailsLabel) { _%>
+                codeStates['<%= nodesAll[i].label  %>'] %> =uf_paginationDataFilter.data
+                <%_ }else { _%>  
+                codeStates['<%= nodesAll[i].label  %>'] %> = <%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+                  <%_ } _%>  
+                codeStates['set<%= nodesAll[i].label %>'] = set<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+                <%_ } _%>  
+              <%_ } _%>
+          codeExecution(code.data,codeStates)
+          }
+          else {
+            set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>(uf_paginationDataFilter.data)
+          }
+        }
+      } catch (err:any) { 
+        toast(err?.response?.data?.errorDetails?.message, 'danger')
+      }
+    }
+<%_ } else if(nodesElementInfo.parentTable!="") { _%>
+
+  async function fetchData(page = 1, pageSize = 10) {
+
+    try{  
+        const uf_dfKey = await AxiosService.get(
+          "/UF/dfKey?ufKey=<%=ufKey%>&groupId=<%=compDetailsID%>",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+        if(uf_dfKey?.data?.error == true){
+          toast(uf_dfKey?.data?.errorDetails?.message, 'danger')
+            return
+        }
+        dfKey = uf_dfKey?.data
+
+      let te_refreshBody:te_refreshDto = {
+        key : dfKey,
+        upId : upId
+        }
+        const te_refresh:any= await AxiosService.post("/te/refresh", te_refreshBody, {
+          headers: {
+            'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`
+          }
+        })
+        if(te_refresh?.data?.error == true){
+          toast(te_refresh?.data?.errorDetails?.message, 'danger')
+          return
+        }
+
+        if(te_refresh.data.status=="Success")
+        {
+          let allData:any=te_refresh.data.dataset.data
+
+          if(<%=compDetailsLabel%><%= compDetailsID.slice(-5)  %>.<%=nodesElementInfo.parentTableId%>){
+
+            let fillterData: any = allData.filter((item:any) => {
+              if(item["<%=nodesElementInfo.parentTableId%>"]==<%=compDetailsLabel%><%= compDetailsID.slice(-5)  %>.<%=nodesElementInfo.parentTableId%>){
+                return item;
+              }
+            })
+  
+            set<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>(fillterData)
+          }
+
+        }
+
+    }
+    catch (err:any) {
+      
+    }
+  }
+
+<%_ }else{  _%>
+  async function fetchData() {
+    try {
+      
+        const uf_dfKey = await AxiosService.get(
+          "/UF/dfKey?ufKey=<%=ufKey%>&groupId=<%=compDetailsID%>",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+        if(uf_dfKey?.data?.error == true){
+          toast(uf_dfKey?.data?.errorDetails?.message, 'danger')
+            return
+        }
+        dfKey = uf_dfKey?.data
+      let te_refreshBody:te_refreshDto = {}
+      te_refreshBody.key = dfKey
+      te_refreshBody.upId = upId
+      const te_refresh:any= await AxiosService.post("/te/refresh",te_refreshBody ,{
+        headers: {
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${token}`
+        }
+      })
+      if(te_refresh?.data?.error == true){
+        toast(te_refresh?.data?.errorDetails?.message, 'danger')
+        return
+      }
+      const resData=await te_refresh.json()
+      console.log(resData)
+<%_ for(let i=0;i<nodesElementInfo.props.length;i++){ _%>
+  <%_if(nodesElementInfo.props[i].name === "needLocking" && nodesElementInfo.props[i].enum.selectedValue.length){  _%>
+    const selectedLocking="<%=nodesElementInfo.props[i].enum.selectedValue[0]%>"
+  <%_ } _%>
+<%_ } _%>   
+    const url =`${baseUrl}/UF/DataOrchestrator?ufKey=<%=ufKey %>&groupName=<%= compDetailsLabel %>`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`, // Adjust according to your API's requirements
+          'Content-Type': 'application/json' // Optional, depending on API requirements
+        }
+      })
+      const data = await response.json()
+      // Verify that the data structure is as expected
+      if (data && Array.isArray(data)) {
+        data.sort((a: any, b: any) => a.<%= nodesElementInfo.primaryKey  %> - b.<%= nodesElementInfo.primaryKey  %>)
+        set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>(data)
+      } else {
+        console.error('Unexpected data structure:', data)
+      }
+    } catch (err:any) {
+      toast(err?.response?.data?.errorDetails?.message, 'danger')
+
+    }
+  }
+<%_ } _%>
+
+<%_  if(nodesElementInfo.parentTable!="") { _%>
+  useEffect(() => {
+    fetchData()
+  }, [<%=compDetailsLabel%><%= compDetailsID.slice(-5) %>])
+  <%_ } else {_%>
+  // useEffect(() => {
+  // fetchData()
+  // }, [])
+  <%_ } _%>
+  useEffect(() => {
+    <%_ if(nodesElementInfo.parentTable!="") { _%>
+      set<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>([])
+    <%_} else { _%>
+    if(paginationData.page != 0 && paginationData.pageSize != 0)
+      fetchData(paginationData.page , paginationData.pageSize)
+    <%_ } _%>
+    setSelectedIds([])
+    setSelectedPaginationData([])
+  }, [refetch])
+  const [columns, setColumns] = useState<any>([])
+  <%_for(let i=0;i<nodesElementInfo.props.length;i++){  _%>
+    <%_if(nodesElementInfo.props[i].name === "tableActions" && nodesElementInfo.props[i].enum.selectedValue.length ){  _%>
+  const RowAction = ({ item }: RenderRowActionsProps<any>) => {
+    return (
+      <React.Fragment>
+        <div className='flex gap-2'>
+        <%_if(nodesElementInfo.props[i].enum.selectedValue.includes("*") || nodesElementInfo.props[i].enum.selectedValue.includes("edit")){  _%>
+          <EditData Columns={defaultColumns} values={item} setRefetch={setRefetch}/>
+        <%_ } _%>
+        <%_if(nodesElementInfo.props[i].enum.selectedValue.includes("*") || nodesElementInfo.props[i].enum.selectedValue.includes("delete")){  _%>
+          <DeleteData values={item} />
+        <%_ } _%>
+        </div>
+      </React.Fragment>
+    )
+  }
+    <%_}_%>
+  <%_}_%>  
+
+  <%_if(Search=='true'){  _%>
+    async function handleSearch()
+    {
+      let searchParams:any = objectToQueryString(nullFilter(SearParams))
+      let tableName : any;
+      tableName ='claims_header'
+      let selectColumns:any =  [
+      <%_ for(let i=0;i<relation.length;i++) { _%>
+        "<%=  relation[i].id %>",
+      <%_ } _%>
+                              ] ;
+      const searchedData = await axios.post(
+        "http://192.168.2.94:3011/claims_header" + '/post?'+searchParams,{selectColumns})
+  
+  if(searchedData?.data.length >= 0){
+    <%=SetStateName%>(searchedData?.data)
+    }
+  
+    }
+  <%_ } _%>
+
+  const handlePrimaryTable = () => {
+    let findData = selectedIds[selectedIds.length - 1]
+
+    let data = <%= compDetailsLabel%><%= compDetailsID.slice(-5) %>[findData]
+    console.log(data)
+
+    setPrimaryTableData({
+      ...primaryTableData,
+      primaryKey: "<%= nodesElementInfo.primaryKey%>",
+      value: data["<%= nodesElementInfo.primaryKey%>"],
+      parentData: data
+    })
+  }
+
+  useEffect(() => {
+    if (selectedIds.length != 0) handlePrimaryTable()
+  }, [selectedIds])
+  return(
+    <div className="col-start-<%= columnStart %> col-end-<%= columnEnd %> row-start-<%= rowStart %> row-end-<%= rowEnd %> gap-<%= gap %>">
+        <Row space={3}>
+            <Col>
+                <Flex direction='column' >
+                  <%_if(Search=='true'){  _%>
+                    <Button onClick={() => setOpen(true)}>Search</Button>
+                    <Modal open={open} onClose={() => setOpen(false)} contentClassName='w-[600px]'>         
+                      <div className='flex flex-col h-[500px] w-[500px] gap-3' >
+                      {defaultColumns.map((item: any) => {
+                        if(item.isSearch=="true"){
+                          return(
+                            <div className='flex w-full items-center justify-center'>
+                              {item.type=="date"?<DatePicker placeholder={item.name}  />:<TextInput placeholder={item.name} type={item.type} onChange={(e: any) => setSearchParams({ ...SearParams, [item.name]: e.target.value })}  value={SearParams?.[item?.name]}  />}
+                              
+                            </div>
+                        )
+                      }
+                      })}
+                      <Button onClick={() => {setOpen(false);handleSearch();
+                      }}>Search</Button>                             
+                                </div>
+                      </Modal>
+                  <%_ } _%>
+                  <MyTable
+            <%_if(eventDetailsArray){  _%>
+              <%_if(eventDetailsArray[1]?.name){  _%>  
+                <%_if(eventDetailsArray[1]?.name=='onSelectionChange'){  _%>
+                <%_ } else {_%>
+                  <%= eventDetailsArray[1]?.name  %> = {<%= eventDetailsArray[1]?.name  %>} 
+                <%_ } _%>
+              <%_ } _%>
+            <%_ } _%>
+                    data={Array.isArray(<%= compDetailsLabel%><%= compDetailsID.slice(-5) %>) ? <%= compDetailsLabel%><%= compDetailsID.slice(-5) %> : []}
+                    columns={defaultColumns}
+                    edgePadding={true}
+                    selectedIds={selectedIds}  
+                    <%_if(needLocking=='true'){  _%>
+                      onSelectionChange={setLockMode} 
+                    <%_ } else {_%>
+                      onSelectionChange={setSelectedIds} 
+                    <%_ } _%>
+                    settings={settings}
+                    updateSettings={setSettings}
+                    <%_if(TableActions=='true'){  _%>
+                    renderRowActions={RowAction}                 
+                    <%_ } _%>
+                  />
+                  <%_if(Pagination=='true'){  _%>
+                    <Pagination
+                    className='flex w-full items-center justify-center'
+                    page={paginationData.page}
+                    pageSize={paginationData.pageSize}
+                    pageSizeOptions={[5, 10, 20, 50, 100]}
+                    total={paginationData.total}
+                    onUpdate={handleUpdate}
+                    showInput={true}
+                    size='l'
+                  />
+                  <%_ } _%>
+                </Flex>
+            </Col>
+        </Row>
+    </div>
+  )
+}
+export default Table<%= nodes.label %>

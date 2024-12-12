@@ -1,0 +1,45 @@
+'use client'
+import { useRouter } from 'next/navigation'
+import React from 'react'
+import { Button } from '@gravity-ui/uikit'
+// import { logoutRealm } from '../utils/serverFunctions'
+import { useTheme } from 'next-themes'
+import { IoSunny } from 'react-icons/io5'
+import { FaMoon } from 'react-icons/fa'
+import { deleteAllCookies, deleteCookie, getCookie } from './cookieMgment'
+import i18n from './i18n'
+const LogoutPage = () => {
+  const routes = useRouter()
+  const { theme, setTheme } = useTheme()
+
+  const toggleTheme = () => {
+    setTheme(theme == 'dark' ? 'light' : 'dark')
+  }
+
+  async function logout() {
+    localStorage.clear()
+    deleteAllCookies()
+    window.location.href = '/'
+  }
+  const keyset:any=i18n.keyset("language")
+  return (
+    <div className='flex w-[100%] justify-end'>
+      {/*<Switch
+        className='select-none'
+        checked={theme == 'dark' ? true : false}
+        onChange={() => toggleTheme()}
+        size='sm'
+        color='primary'
+        thumbIcon={({ isSelected }) =>
+          isSelected ? <IoSunny color='#000' /> : <FaMoon color='#000' />
+        }
+      ></Switch> */}
+
+      <Button  onClick={logout}>
+        {keyset("Logout")}
+      </Button>
+    </div>
+  )
+}
+
+export default LogoutPage

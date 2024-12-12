@@ -1,0 +1,495 @@
+'use client'
+<%_ let nodesElementInfo = data.elementInfo _%>
+<%_ let componentId = data.id  _%>
+<%_ let nodes = data _%>
+<%_ let nodesAll = relation _%>
+<%_ let ufKey = data1[0].ufKey _%>
+<%_ let pfKey = data1[0].pfKey _%>
+<%_ let sfKey = data1[0].sfKey _%>
+<%_ let stateAndSetStatePre = data1[3] _%>
+<%_ let eventDetailsArray = data1[1] _%>
+<%_ let eventDetailsObj = data1[2] _%>
+<%_ let compDetailsLabel = data2.label _%>
+<%_ let compDetailsID = data2.componentsId _%>
+<%_ let presentEvents=[] _%>
+<%_ for (let i = 0; i < eventDetailsArray.length; i++) { _%>
+  <%_ presentEvents.push(eventDetailsArray[i].name) _%>
+<%_ } _%>
+import React, { useState,useContext } from 'react'
+import axios from 'axios';
+import { useRouter } from 'next/navigation'
+import {Button,Container} from '@gravity-ui/uikit';
+import i18n from '@/app/components/i18n';
+import { codeExecution } from '@/app/utils/codeExecution'
+import { useInfoMsg } from '@/app/torusStaticHandlers/infoMsgHandler';
+import { TotalContext, TotalContextProps } from '@/app/globalContext';
+<%_ for (let i = 0; i < eventDetailsArray.length; i++) { _%>
+  <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'showProfileAsModal') { _%>
+import {Modal} from '@gravity-ui/uikit';
+import <%= toPascalCase(eventDetailsArray[i + 1].name.split('.')[0]); %>page from '@/app/<%= eventDetailsArray[i + 1].name.split('.')[0]; %>/<%= eventDetailsArray[i + 1].name.split('.')[0]; %>page';
+    <%_ } _%>
+<%_ } _%>
+import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_updateDto } from '@/app/interfaces/interfaces';
+<%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+  <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+import { ActionTooltip } from '@gravity-ui/uikit';
+  <%_ } _%>
+<%_ } _%>
+import decodeToken from '@/app/components/decodeToken';
+import { AxiosService } from '@/app/components/axiosService';
+import { getCookie } from '@/app/components/cookieMgment';
+import { nullFilter } from '@/app/utils/nullDataFilter';
+<%_ for(let i=0;i<nodesElementInfo.props.length;i++){_%>
+<%_ if(nodesElementInfo.props[i].name === 'isIconOnly' && nodesElementInfo.props[i].value){_%>
+import { <%= nodesElementInfo.props[i].icon  %> } from 'react-icons/fa'
+<%_ } _%>
+<%_ } _%>
+<%
+  // Define the toPascalCase function
+  function toPascalCase(str) {
+    return str
+      .toLowerCase()
+      .replace(/(?:^|\s|_)(\w)/g, (_, c) => c.toUpperCase());
+  }
+%>
+function objectToQueryString(obj: any) {
+  return Object.keys(obj)
+    .map(key => {
+      // Determine the modifier based on the type of the value
+      const value = obj[key];
+      let modifiedKey = key;
+
+      if (typeof value === 'string') {
+        modifiedKey += '-contains';  // Append '-contains' if value is a string
+      } else if (typeof value === 'number') {
+        modifiedKey += '-equals';    // Append '-equals' if value is a number
+      }
+
+      // Return the key-value pair with the modified key
+      return `${encodeURIComponent(modifiedKey)}=${encodeURIComponent(value)}`;
+    })
+    .join('&');
+}
+const Button<%= nodes.label %> =  ({ /* <%_ for(let i=0;i<stateAndSetStatePre.length;i++) { _%> <%= Object.keys(stateAndSetStatePre[i])[0] %>, <%= stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]], %>,<%_} _%> */lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch<%_ if(pfKey !== '') {_%> <%_ } _%>}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,/*<%_ for(let i=0;i<stateAndSetStatePre.length;i++) { _%> <%= Object.keys(stateAndSetStatePre[i])[0] %>:any, <%= stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]] %>:any,<%_} _%>*/<%_ if(pfKey !== '') {_%><%_ } _%>}) => {
+  const keyset:any=i18n.keyset("language")
+  const toast:any=useInfoMsg()
+  const [open, setOpen] = React.useState(false);
+  <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+  <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+  const {<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>, set<%= nodesAll[i].label %><%= nodesAll[i].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps
+    <%_ } _%>  
+  <%_ } _%>
+  <%_if(eventDetailsArray !== '' && eventDetailsObj !== '' && pfKey !== '' ){_%>
+  const token:string = getCookie('token');
+  let dfKey: string | any
+  const decodedTokenObj:any = decodeToken(token);
+  const createdBy:string =decodedTokenObj.users;
+  const lockMode:any = lockedData.lockMode;
+  const [loading, setLoading] = useState(false)
+  const routes = useRouter()
+  const sessionInfo:any = {
+    accessToken: token,
+    authToken: ''
+  }
+<%_ if(presentEvents.includes('onClick')) {_%>
+  const handleClick = async () => {
+    await handleCustomCode('onClick')
+    let saveCheck=false
+    Object.keys(checkToAdd).map((item)=>{
+      if(checkToAdd[item] == true){
+        saveCheck=true
+    }})
+    if (saveCheck) {   
+      toast('Error found', 'danger')
+      return
+    }
+    try{
+      const uf_dfKey = await AxiosService.get(
+        "/UF/dfKey?ufKey=<%= ufKey %>&groupId=<%= compDetailsID  %>",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+      if(uf_dfKey?.data?.error == true || uf_dfKey?.data == ''){
+          // toast(uf_dfKey?.data?.errorDetails?.message, 'danger')
+          dfKey = getCookie('dfKey')
+      }else{
+
+        dfKey = uf_dfKey?.data
+      }
+      let uf_initiatePf:any
+      let te_eventEmitterBody:te_eventEmitterDto
+      let primaryKey:any
+      let uf_getPFDetails:any
+      let uf_ifo:any
+      let lockedKeysLength:number
+      const uf_getPFDetailsBody:uf_getPFDetailsDto={
+        key:"<%=ufKey %>",
+        groupId:"<%= compDetailsID%>",
+        controlId:"<%= nodes.id%>",
+        isTable:false
+      }
+      uf_getPFDetails =  await AxiosService.post("/UF/getPFDetails",uf_getPFDetailsBody,{
+        headers: {
+            'Content-Type': 'application/json'
+          },
+        }
+      )
+      if (uf_getPFDetails.data.key != undefined) {
+           const uf_initiatePfBody:uf_initiatePfDto={
+            key:uf_getPFDetails.data.key,
+          }
+              uf_initiatePf = await AxiosService.post("/UF/InitiatePF",uf_initiatePfBody,
+                { headers: {
+                  'Content-Type': 'application/json'
+                }, })
+                if(uf_initiatePf?.data?.error == true){
+                  toast(uf_initiatePf?.data?.errorDetails?.message, 'danger')
+                  return
+                }
+       
+      } else {
+        uf_initiatePf= {
+          data:{
+            nodeProperty:'',
+            eventProperty:''
+          }
+        }
+      }
+      <%_ let eventSet = new Set(); _%>
+      <%_ let eventObj = eventDetailsObj _%>
+      let artifactKey:any;
+      <%_ for (let i = 0; i < eventDetailsArray.length; i++) { _%>
+        <%_ let eventId = eventDetailsArray[i].id _%>
+        <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'showProfile') { _%>
+      // showProfile 
+          routes.push("/<%= eventDetailsArray[i + 1].name.split('.')[0]%>")
+        <%_ } _%>
+        <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'showProfileAsModal') { _%>
+          // showProfile 
+          const code = await AxiosService.post('/UF/code', {
+            key: '<%=ufKey%>',
+            groupId: '<%= compDetailsID%>',
+            control:"<%= nodes.id %>"
+          })
+          if (code?.data?.error == true) {
+            //toast(code?.data?.errorDetails?.message, 'danger')
+            //return
+          }  else if (code?.data != '') {
+            let codeStates: any = {}
+            <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+              <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+                  codeStates['<%= nodesAll[i].label  %>'] %> = <%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+                  codeStates['set<%= nodesAll[i].label %>'] = set<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+                <%_ } _%>  
+              <%_ } _%>
+          codeExecution(code.data,codeStates)
+          }
+          setOpen(true)
+            <%_ } _%>
+      <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'saveHandler') { _%>
+      // saveHandler  
+      let te_saveBody:te_eventEmitterDto ={
+        ...uf_initiatePf.data.nodeProperty}
+      let eventData:any = {status:uf_initiatePf.data.eventProperty.sourceStatus,
+        created_by:createdBy,
+        modified_by:createdBy
+      }
+      if (uf_getPFDetails.data.key != undefined) {
+        const uf_ifoBody:uf_ifoDto={
+          formData:<%=compDetailsLabel%><%= compDetailsID.slice(-5)  %>,
+          key:uf_getPFDetails.data.key,
+          groupId:"<%= compDetailsID%>",
+          controlId:"<%= nodes.id%>"
+        }
+        uf_ifo = await AxiosService.post(
+        "/UF/ifo",
+          uf_ifoBody,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+        if(uf_ifo?.data?.error == true){
+          toast(uf_ifo?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        te_saveBody.data = {...uf_ifo?.data,...eventData}
+        te_saveBody.event = uf_initiatePf.data.eventProperty.sourceStatus
+        te_saveBody.key= te_saveBody.key.slice(0, te_saveBody.key.lastIndexOf(':')) + ':';
+      }else{
+        te_saveBody.data = <%=compDetailsLabel%><%= compDetailsID.slice(-5)  %>
+
+      }
+
+      const code = await AxiosService.post('/UF/code', {
+        key: '<%=ufKey%>',
+        groupId: '<%= compDetailsID%>',
+        controlId:"<%= nodes.id %>"
+      })
+      if (code?.data?.error == true) {
+        //toast(code?.data?.errorDetails?.message, 'danger')
+        //return
+      }  else if (code?.data != '') {
+          let codeStates: any = {}
+          <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+            <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+              codeStates['<%= nodesAll[i].label  %>'] %> = <%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+              codeStates['set<%= nodesAll[i].label %>'] = set<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+              <%_ } _%>  
+            <%_ } _%>
+        codeExecution(code.data,codeStates)
+        }
+      //te_saveBody.data=nullFilter(te_saveBody.data)
+      te_saveBody.url = uf_getPFDetails.data.url;
+      primaryKey = uf_getPFDetails.data.primaryKey;
+      const te_save = await AxiosService.post("/handler/save",te_saveBody,{
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+        }
+      )
+
+    if(te_save?.data?.error == true){
+      toast(te_save?.data?.errorDetails?.message, 'danger')
+      return
+    }
+
+    if (uf_getPFDetails.data.key != undefined) {
+    let te_updateBody:te_updateDto ={};
+    te_updateBody.data = [{status:te_save.data.event,'modified_by':createdBy,process_id:te_save.data.upId}]
+    te_updateBody.key = dfKey
+    te_updateBody.upId = te_save.data.upId
+    te_updateBody.tableName = uf_getPFDetails.data.url.split('/')[3]
+
+    if (Array.isArray(te_save.data.insertedData)) {
+      let primaryKeys:any[]=[];
+      for (let i = 0; i < te_save.data.insertedData; i++) {
+        primaryKeys.push(te_save.data.insertedData[i].primaryKey)
+      }
+      te_updateBody.primaryKey = primaryKeys
+    }
+    if (typeof te_save.data.insertedData === 'object') {
+      te_updateBody.primaryKey = [te_save.data.insertedData[primaryKey]]
+    }
+
+    te_updateBody.url = process.env.NEXT_PUBLIC_API_URL
+
+    const te_update:any=await AxiosService.post("/handler/update",te_updateBody,{
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (te_update && te_update?.status) {
+      toast('data updated successfully', 'success')
+    }
+
+    if(te_update?.data?.error == true){
+      toast(te_update?.data?.errorDetails?.message, 'danger')
+      return
+    }
+  }
+
+    let keys: any = {}
+    Object.keys(<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>).map((item: any) => {
+      keys[item] = ''
+    })
+    set<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>(keys)
+    <%_ } _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'setFormData') { _%>
+        // setFormData
+
+        set<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>(te_save.data.result)
+    <%_ } _%>
+    <%_ if (eventDetailsArray[i].eventContext === "riseListen" && eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'searchHandler') { _%>
+      // searchHandler
+
+      <%_ let searchTargetTableName = eventDetailsArray[i+1].name _%>
+      <%_ let searchTargetTableId = eventDetailsArray[i+1].id _%>
+      
+      let searchParams:any = objectToQueryString({...<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>})
+      let tableName : any;
+
+      <%_ let selectColumns = [] _%>
+      <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+        <%_ if (nodesAll[i].T_parentId === searchTargetTableId.split('.')[0] && nodesAll[i].type === 'column') { _%>
+        <%_ selectColumns.push(nodesAll[i].label) _%>
+        <%_ } _%>  
+        <%_ } _%>    
+      <%_ for (let i = 0; i < nodesAll.length; i++) { _%>      
+      <%_ if (nodesAll[i].id === searchTargetTableId.split('.')[0]) { _%>
+      tableName ='<%= nodesAll[i].elementInfo.tableName %>'
+      let selectColumns:any =  <%- JSON.stringify(selectColumns, null, 2)  %> ;
+      const searchedData = await axios.post(
+        process.env.NEXT_PUBLIC_API_URL +  tableName + '/post?'+searchParams,{selectColumns})
+        set<%= searchTargetTableName %><%= searchTargetTableId.split('.')[0].slice(-5)  %>(searchedData.data)
+        return
+      <%_ } _%>    
+      <%_ } _%>
+    <%_ } _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'clearHandler') { _%>
+      // clearHandler
+      set<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>({});
+    <%_ } _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'updateHandler') { _%>
+        // updateHandler
+        
+      te_eventEmitterBody = {
+        ...uf_initiatePf.data.nodeProperty,
+        data:{"value":uf_getPFDetails.data.status},
+        upId : lockedData.processIds,
+        event : uf_initiatePf.data.eventProperty.sourceStatus
+      }
+      let keys: any = {}
+      Object.keys(<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>).map((item: any) => {
+        keys[item] = ''
+      })
+      set<%= compDetailsLabel%><%= compDetailsID.slice(-5)  %>(keys)
+
+      const te_eventEmitter=await AxiosService.post("/te/eventEmitter",te_eventEmitterBody,
+        { headers: {Authorization: `Bearer ${token}`}})
+        if(te_eventEmitter?.data?.error == true){
+          toast(te_eventEmitter?.data?.errorDetails?.message, 'danger')
+          return
+        }
+      lockedKeysLength = lockedData.primaryKeys.length;
+      let te_updateBody:any ={};
+      te_updateBody.data = [];
+      let toUpdatedData = {status:uf_getPFDetails.data.status,'modified_by':createdBy}
+      for (let i = 0; i < lockedKeysLength; i++) {
+        te_updateBody.data.push(toUpdatedData)        
+      }
+      te_updateBody.key = dfKey
+      te_updateBody.upId = lockedData.processIds
+      te_updateBody.tableName = uf_getPFDetails.data.tableName
+      te_updateBody.primaryKey = lockedData.primaryKeys
+      te_updateBody.url = process.env.NEXT_PUBLIC_API_URL
+      if(lockMode.lockMode === 'Single' || lockMode.lockMode === 'Multi'){
+        te_updateBody.lockDetails = {ttl: +lockedData.ttl}
+      }
+
+      const te_update:any =await AxiosService.post("/handler/update",te_updateBody,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (te_update && te_update?.status) {
+        toast('data updated successfully', 'success')
+      }
+    <%_ } _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'infoMsg') { _%>
+      toast('<%= eventDetailsArray[i].hlr.params.message %>', '<%= eventDetailsArray[i].hlr.params.type %>')
+    <%_ } _%>
+    <%_ } _%>
+      setRefetch((pre: any) => !pre)
+    }catch (err: any) {
+      toast(err?.response?.data?.errorDetails?.message, 'danger')
+      setLoading(false)
+    }
+  }
+  <%_}_%>
+<%_ } _%> 
+<%_ if(presentEvents.includes('onFocus')) {_%>
+  const handleFocus = async () => {
+    await handleCustomCode()
+  }
+<%_ } _%> 
+ 
+<%_ let columnStart = nodes.grid.column.start  _%>  
+<%_ let columnEnd = nodes.grid.column.end  _%>
+<%_ let rowStart = nodes.grid.row.start  _%>
+<%_ let rowEnd = nodes.grid.row.end  _%>
+<%_ let gap = nodes.grid.style.gap  _%>
+
+const handleCustomCode=async (data:any) => {
+  const code = await AxiosService.post('/UF/code', {
+    key: '<%=ufKey%>',
+    groupId: '<%= compDetailsID%>',
+    controlId:"<%= nodes.id %>",
+    event:data,
+  })
+  if (code?.data?.error == true) {
+    //toast(code?.data?.errorDetails?.message, 'danger')
+    //return
+  }  else if (code?.data != '') {
+    let codeStates: any = {}
+    <%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+      <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+          codeStates['<%= nodesAll[i].label  %>'] %> = <%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+          codeStates['set<%= nodesAll[i].label %>'] = set<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>,
+        <%_ } _%>  
+      <%_ } _%>
+  codeExecution(code.data,codeStates)
+  }
+}
+  return (
+    <div className="col-start-<%= columnStart %> col-end-<%= columnEnd %> row-start-<%= rowStart %> row-end-<%= rowEnd %> gap-<%= gap %>" >
+      <%_ for (let j = 0; j < eventDetailsArray.length; j++) { _%>
+        <% if(eventDetailsArray[j]?.name=="showProfileAsModal" && eventDetailsArray[j]?.type=="handlerNode") {%>
+          <Modal open={open} onClose={() => setOpen(false)} contentClassName='w-[<%= eventDetailsArray[j]?.hlr?.params?.width%>] h-[<%= eventDetailsArray[j]?.hlr?.params?.height%>]'>         
+            <div className='flex h-[30px] w-full'>
+             <div className='flex  w-[100%] justify-center'><%= eventDetailsArray[j + 1].name.split('.')[0]%></div>
+             <button
+               className='flex w-[30px] justify-end'
+               onClick={() => setOpen(false)}
+             >
+             </button>
+           </div>
+           <<%= toPascalCase(eventDetailsArray[j + 1].name.split('.')[0]); %>page/>
+           </Modal>
+        <%_ } _%>
+      <%_ } _%>
+      <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+        <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+      <ActionTooltip <%_ for(let j=0;j<nodesElementInfo.props[i].tooltipProps.length;j++) { _%><%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "title" && nodesElementInfo.props[i].tooltipProps[j].value !== ""){ _%><%= ' '  %>title="<%= nodesElementInfo.props[i].tooltipProps[j].value %>"<%_ } _%> <%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "placement" && nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue.length){ _%><%_ %><%= ' '  %>placement="<%= nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue[0] %>"<%_ } _%><%_ } _%>>
+          <%_ } _%>
+      <%_ } _%>
+        <Button 
+          className="w-full"
+          <%_ if(presentEvents.includes('onFocus')) {_%>
+          onFocus={handleFocus}
+          <%_ } _%>
+          <%_ if(presentEvents.includes('onClick')) {_%>
+          onClick={handleClick}
+          <%_ } _%>
+        <%_ for(let i=0;i<nodesElementInfo.props.length;i++){_%>
+        <%_ if(nodesElementInfo.props[i].name === 'view' && nodesElementInfo.props[i].enum.selectedValue.length ){_%> 
+          view='<%= nodesElementInfo.props[i].enum.selectedValue[0] %>'
+        <%_ } _%>
+        <%_ if(nodesElementInfo.props[i].name === 'size' && nodesElementInfo.props[i].enum.selectedValue.length){ _%>  
+          size='<%= nodesElementInfo.props[i].enum.selectedValue[0]  %>'           
+        <%_ } _%> 
+        <%_ if(nodesElementInfo.props[i].name === 'disabled' && nodesElementInfo.props[i].enum.selectedValue.length ){_%>
+          disabled={<%= nodesElementInfo.props[i].enum.selectedValue[0] %>}
+        <%_ } _%>
+        <%_ if(nodesElementInfo.props[i].name === 'pin' && nodesElementInfo.props[i].enum.selectedValue.length ){ _%> 
+          pin='<%=nodesElementInfo.props[i].enum.selectedValue[0] %>'
+        <%_ } _%>
+        <%_ } _%>
+        >
+        <%_ for(let i=0;i<nodesElementInfo.props.length;i++){_%>
+          <%_ if( nodesElementInfo.props[i].name === 'icon' && nodesElementInfo.props[i].value !== "true"){ _%>     
+          {keyset("<%= nodesElementInfo.label %>")}
+          <%_ } else if(nodesElementInfo.props[i].name === 'icon' && nodesElementInfo.props[i].value === "true"){_%>
+            {< <%= nodesElementInfo.props[i].icon %>/>}
+          <%_ } _%>
+          <%_ } _%> 
+        </Button>
+      <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+          <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+      </ActionTooltip>
+          <%_ } _%>
+      <%_ } _%>
+    </div>
+  )
+}
+export default Button<%= nodes.label %>
+

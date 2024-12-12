@@ -1,0 +1,37 @@
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class HStack extends StatelessWidget {
+  final GSHstackSpaces? spaces;
+  final MainAxisAlignment mainAxisAlignment;
+  final CrossAxisAlignment? crossAxisAlignment;
+  final MainAxisSize? mainAxisSize;
+  final TextDirection? textDirection;
+  final VerticalDirection? verticalDirection;
+  final bool isReversed;
+  final List<Widget>? children;
+  const HStack({
+    super.key,
+    this.spaces,
+    this.mainAxisAlignment = MainAxisAlignment.center,
+    this.crossAxisAlignment,
+    this.mainAxisSize,
+    this.textDirection,
+    this.children,
+    this.verticalDirection,
+    this.isReversed = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSHStack(
+      space: spaces,
+      mainAxisAlignment: mainAxisAlignment,
+      crossAxisAlignment: crossAxisAlignment ?? CrossAxisAlignment.center,
+      mainAxisSize: mainAxisSize ?? MainAxisSize.max,
+      textDirection: textDirection,
+      verticalDirection: verticalDirection ?? VerticalDirection.down,
+      isReversed: isReversed,
+      children: children ?? [],
+    );
+  }
+}

@@ -1,0 +1,170 @@
+<%_ let appName = data.toLowerCase() _%>
+<%_ let appNameinPascal = data _%>
+<%_ let gitRepo = relation _%>
+pipeline {
+    agent {
+        label 'slave-224'
+    }
+    tools {
+        jdk 'jdk17' 
+        nodejs 'Node20.0.0'
+    }
+    environment {
+        DOCKERHUB_USERNAME = "192.168.2.164:5000"
+        APP_NAME = "torus9x-<%= appName %>-df"
+        IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
+        BUILD_NUMBER = "${BUILD_NUMBER}"
+        GITHUB_CREDENTIALS = "GIT_HUB_PAT"  // Ensure this matches the actual Jenkins credentials ID
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        SCANNER_HOME = tool 'sonar-scanner'
+        // TEAMS_WEBHOOK_URL = "https://torusinnovations.webhook.office.com/webhookb2/42591eab-8978-4c7c-be97-a75bae9224c5@8448116c-715c-489a-9091-5089c544ee9a/JenkinsCI/6fe90330da3e434a9896db35ba4c4c15/08d472e5-b4f8-4b58-94b8-9d279de3ad57/V2OecgfidKoX8RPzoicKbkENdyNp2bPNz7zsESJeKPwYk1"
+    }
+
+    stages {
+        /* stage('Send Commit Message to Teams') {
+            steps {
+                script {
+                    // Ensure the Git repository is properly checked out
+                    def commitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    def commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    def commitUrl = "${env.GIT_URL}/commit/${env.GIT_COMMIT}"
+
+                    def payload = groovy.json.JsonOutput.toJson([
+                        title: "New Commit Notification",
+                        text: "Latest commit by ${commitAuthor}:\n**${commitMessage}**\n[View Commit](${commitUrl})"
+                    ])
+                    
+                    httpRequest(
+                        httpMode: 'POST',
+                        url: TEAMS_WEBHOOK_URL,
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: payload
+                    )
+                }
+            }
+        } */
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Code Checkout') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: '<%= gitRepo %>'
+                }
+            }
+        }
+
+        stage("Sonarqube Analysis") {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh """
+                    ${SCANNER_HOME}/bin/sonar-scanner \
+                    -Dsonar.projectName=<%= appNameinPascal %>-gen-app \
+                    -Dsonar.projectKey=<%= appNameinPascal %>-gen-app
+                    """
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token'
+                }
+            }
+        }
+
+       /* stage('Snyk SCA Analysis Test') {
+            steps {
+                script {
+                    // Snyk authentication
+                    sh 'snyk auth $SNYK_TOKEN'
+
+                    // Run Snyk test for vulnerabilities and generate report
+                    sh 'snyk test --all-projects --report || true'
+
+                    // Monitor project (send scan results to Snyk UI)
+                    sh 'snyk monitor --all-projects'
+                }
+            }
+        } */
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
+                        sh """
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} .
+                        docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
+                        """
+                    }
+                }
+            }
+        }
+
+        /* stage('TRIVY Image Scan') {
+            steps {
+                script {
+                    def dockerRegistry = "${DOCKERHUB_USERNAME}"
+                    sh """
+                    trivy image --scanners vuln ${dockerRegistry}/${APP_NAME}:${IMAGE_TAG} > trivyimage.txt
+                    """
+                }
+            }
+        } */
+
+        
+
+        stage('Update Kubernetes Deployment File') {
+            steps {
+                script {
+                    def final_tag = "${IMAGE_TAG}".trim()
+                    echo "${final_tag} test" // Optional debug output
+                    sh """
+                        sed -i 's/docker_tag/${final_tag}/g' kubernetes/deploymentservice.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withKubeConfig(credentialsId: 'kubernetes-224', serverUrl: 'https://lb.kubesphere.local:6443') {
+                        sh """
+                            kubectl delete pods --all -n <%= appName %>-df || true
+                            kubectl apply -f kubernetes/deploymentservice.yaml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Remove Previous Build Image') {
+            steps {
+                script {
+                    def prevBuildNumber = env.BUILD_NUMBER.toInteger() - 1
+                    if (prevBuildNumber > 0) {
+                        sh "docker rmi -f ${IMAGE_NAME}:${prevBuildNumber} || true"
+                    }
+                }
+            }
+        }
+
+       /* stage('Copy ZAP Script') {
+            steps {
+                sh 'scp /home/jenkins/workspace/Next-app-k8s/scrp.sh /tmp'
+            }
+        } */
+
+        /* stage('Dynamic Application Security Testing using ZAP Tool') {
+            steps {
+                sh 'chmod +x /tmp/scrp.sh'
+                sh '/tmp/scrp.sh'
+            }
+        } */
+    }
+}

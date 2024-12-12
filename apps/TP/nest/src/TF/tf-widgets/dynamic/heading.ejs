@@ -1,0 +1,89 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final String text;
+  final GSHeadingSizes? size;
+  final GSStyle? style;
+  final Locale? locale;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final Color? selectionColor;
+  final String? semanticsLabel;
+  final bool? softWrap;
+  final StrutStyle? strutStyle;
+  final TextAlign? textAlign;
+  final TextDirection? textDirection;
+  final TextHeightBehavior? textHeightBehavior;
+  final TextScaler? textScaler;
+  final TextWidthBasis? textWidthBasis;
+  final bool sub;
+  final bool bold;
+  final bool highlight;
+  final bool isTruncated;
+  final bool italic;
+  final bool strikeThrough;
+  final bool underline;
+  final double? letterSpacing;
+
+  const <%= relation[0] %>({
+    super.key,
+    required this.text,
+    this.size,
+    this.style,
+    this.locale ,
+    this.maxLines,
+    this.overflow,
+    this.selectionColor,
+    this.semanticsLabel,
+    this.softWrap,
+    this.strutStyle,
+    this.textAlign,
+    this.textDirection,
+    this.textHeightBehavior,
+    this.textScaler,
+    this.textWidthBasis,
+    this.sub = false,
+    this.bold = false,
+    this.highlight = false,
+    this.isTruncated = false,
+    this.italic = false,
+    this.strikeThrough = false,
+    this.underline = false,
+    this.letterSpacing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSHeading(
+      text: text,
+      size: size ?? GSHeadingSizes.$md,
+      style: style ??
+          GSStyle(
+            textStyle: TextStyle(
+              letterSpacing: letterSpacing ?? $GSLetterSpacing.$md,
+            ),
+          ),
+      locale: locale,
+      maxLines: maxLines,
+      overflow: overflow,
+      selectionColor: selectionColor,
+      semanticsLabel: semanticsLabel,
+      softWrap: softWrap,
+      strutStyle: strutStyle,
+      textAlign: textAlign,
+      textDirection: textDirection,
+      textHeightBehavior: textHeightBehavior,
+      textScaler: textScaler,
+      textWidthBasis: textWidthBasis,
+      sub: sub,
+      bold: bold,
+      highlight: highlight,
+      isTruncated: isTruncated,
+      italic: italic,
+      strikeThrough: strikeThrough,
+      underline: underline,
+    );
+  }
+}

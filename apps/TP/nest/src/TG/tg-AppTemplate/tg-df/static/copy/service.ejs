@@ -1,0 +1,220 @@
+import { HttpException, Injectable,HttpStatus } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import * as v from 'valibot';
+import { errorObj } from 'src/interfaces/errorObj.interface';
+import { CommonService } from 'src/commonService';
+
+@Injectable()
+export class codeDescriptionService {
+  constructor(private readonly prismaService: PrismaService,
+  private readonly commonService: CommonService) {}
+
+  async findSchema (token) {
+    const data = {
+      ccdId: "number",
+      cdCategory: "string",
+      ClientCode: "string",
+      code: "string",
+      description: "string",
+      parentCode: "string",
+      sortOrder: "number"
+    }
+    return data;
+  }
+
+  async findAllmethod(queryDto: any, limit:number,selectColumns:any) {
+    try {
+      let queryCondition:any ={}
+      let queryValue:any = {}
+      let columns:any = {}
+      selectColumns.forEach(element => {
+        columns[element] = true
+      });
+      Object.keys(queryDto).forEach((key) => {
+        if (key.includes('-')) {
+          queryCondition[key.split('-')[0]] = key.split('-')[1]
+          queryValue[key.split('-')[0]] = queryDto[key]
+        }
+      })      
+      const { page }: { page: number } = queryDto;
+      let query: any = {}; 
+      const { ccdId }: {ccdId : number} = queryValue;
+      const { cdCategory }: {cdCategory : string} = queryValue;
+      const { ClientCode }: {ClientCode : string} = queryValue;
+      const { code }: {code : string} = queryValue;
+      const { description }: {description : string} = queryValue;
+      const { parentCode }: {parentCode : string} = queryValue;
+      const { sortOrder }: {sortOrder : number} = queryValue;
+
+      if(ccdId){ 
+        query.ccdId = { [queryCondition['ccdId']]: ccdId };
+      }
+      if(cdCategory){ 
+        query.cdCategory = { [queryCondition['cdCategory']]: cdCategory };
+      }
+      if(ClientCode){ 
+        query.ClientCode = { [queryCondition['ClientCode']]: ClientCode };
+      }
+      if(code){ 
+        query.code = { [queryCondition['code']]: code };
+      }
+      if(description){ 
+        query.description = { [queryCondition['description']]: description };
+      }
+      if(parentCode){ 
+        query.parentCode = { [queryCondition['parentCode']]: parentCode };
+      }
+      if(sortOrder){ 
+        query.sortOrder = { [queryCondition['sortOrder']]: sortOrder };
+      }
+      const skip = (page - 1) * limit;
+      if (Object.keys(query).length > 0) {
+        const banks = await this.prismaService.codeDescription.findMany({
+          select:columns,
+          where: query,          
+        });
+        return banks;
+      }
+
+      if(!skip && !limit && Object.keys(query).length == 0){
+        const banks = await this.prismaService.codeDescription.findMany({
+          select:columns,
+        });
+        return banks;
+      }
+
+      const banks = await this.prismaService.codeDescription.findMany({
+        select:columns,
+        where: query,
+        skip: skip,
+        take: limit,
+      });
+
+      const totalItems = await this.prismaService.codeDescription.count({
+        where: query,
+      });
+
+      return {
+        items: banks,
+        totalPages: Math.ceil(totalItems / limit),
+      };
+    } catch (error) {
+      console.error('Error in findAllmethod:', error);
+      throw new Error('Failed to fetch data'); 
+    }
+  }
+
+  async findOne(ccdId:number,token : string) {
+    try{
+      const res = await this.prismaService.codeDescription.findUnique({ 
+      where: {ccdId},
+      select: {ccdId:true,cdCategory:true,ClientCode:true,code:true,description:true,parentCode:true,sortOrder:true,next_status:true,status:true,process_id:true}
+    });
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+  }
+
+  async findAll(token : string) {
+    try{
+      const res = await this.prismaService.codeDescription.findMany({ 
+      select: {ccdId:true,cdCategory:true,ClientCode:true,code:true,description:true,parentCode:true,sortOrder:true,next_status:true,status:true,process_id:true}
+      });
+      return res;
+    } catch (error) {
+      throw new HttpException(error.message, 400, {});
+    }
+    }
+    
+  async create(createcodeDescriptionDto: Prisma.codeDescriptionCreateInput,token:string) {
+    try{
+      const dataSchema:any =  v.object({
+            cdCategory :  v.optional(v.pipe(v.string(),v.maxLength(100 )) ), 
+            ClientCode :  v.optional(v.pipe(v.string(),v.maxLength(250 )) ), 
+            code :  v.optional(v.pipe(v.string(),v.maxLength(250 )) ), 
+            description :  v.optional(v.pipe(v.string(),v.maxLength(100 )) ), 
+            parentCode :  v.optional(v.pipe(v.string(),v.maxLength(100 )) ), 
+            sortOrder :  v.optional(v.number() ),
+        });
+        let validate : any = v.safeParse(dataSchema,createcodeDescriptionDto);
+        if (!validate.success) {
+          let errorObj: errorObj = {
+            tname: 'TG',
+            errGrp: 'Data',
+            fabric: 'DF',
+            errType: 'Fatal',
+            errCode: 'TG101',
+          };
+          const errorMessage = validate.issues[0].message;
+          const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+          let errObj = await this.commonService.commonErrorLogs(
+            errorObj,
+            token,
+            'dfKey',
+            errorMessage,
+            statusCode,
+          );
+          return errObj;
+        }
+      const res = await this.prismaService.codeDescription.create({ 
+      data: createcodeDescriptionDto, 
+      select:{ccdId:true,cdCategory:true,ClientCode:true,code:true,description:true,parentCode:true,sortOrder:true,next_status:true,status:true}
+    })
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+    
+  }
+
+  async update(ccdId:number, updatecodeDescriptionDto: Prisma.codeDescriptionUpdateInput,token:string) {   
+      const dataSchema:any =  v.object({
+          cdCategory :  v.optional(v.pipe(v.string(),v.maxLength(100 ))), 
+          ClientCode :  v.optional(v.pipe(v.string(),v.maxLength(250 ))), 
+          code :  v.optional(v.pipe(v.string(),v.maxLength(250 ))), 
+          description :  v.optional(v.pipe(v.string(),v.maxLength(100 ))), 
+          parentCode :  v.optional(v.pipe(v.string(),v.maxLength(100 ))), 
+          sortOrder :  v.optional(v.number())
+      });
+      let validate : any = v.safeParse(dataSchema,updatecodeDescriptionDto);
+      if (!validate.success) {
+        let errorObj: errorObj = {
+          tname: 'TG',
+          errGrp: 'Data',
+          fabric: 'DF',
+          errType: 'Fatal',
+          errCode: 'TG101',
+        };
+        const errorMessage = validate.issues[0].message;
+        const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        let errObj = await this.commonService.commonErrorLogs(
+          errorObj,
+          token,
+          'dfKey',
+          errorMessage,
+          statusCode,
+        );
+        return errObj;
+      }
+      const res = await this.prismaService.codeDescription.update({
+      where: {ccdId},
+      data: updatecodeDescriptionDto,
+      select: {ccdId:true,cdCategory:true,ClientCode:true,code:true,description:true,parentCode:true,sortOrder:true,next_status:true,status:true}
+    });
+    return res;    
+}
+
+  async remove(ccdId:number,token : string) {
+    try{
+      const res = await this.prismaService.codeDescription.delete({
+      where: {ccdId },
+      select: {ccdId:true,cdCategory:true,ClientCode:true,code:true,description:true,parentCode:true,sortOrder:true,next_status:true,status:true,process_id:true}
+    });
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+  }
+}

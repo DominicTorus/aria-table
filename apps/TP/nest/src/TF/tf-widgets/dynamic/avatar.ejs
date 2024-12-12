@@ -1,0 +1,101 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final String? fallBackText;
+  final String? imageUrl;
+  final GSAvatarRadius? radius;
+  final GSAvatarSizes? size;
+  final GSImageType imageType;
+  final double? fontSize;
+  final $GSFontWeights? fontWeight;
+  final bool enableBadge;
+  final Color bg;
+  final Color? textColor;
+  final Function()? onTap;
+  const <%= relation[0] %>({
+    super.key,
+    this.fallBackText,
+  <%_ if(data.elementInfo.props){ _%>
+    <%_ data.elementInfo.props.forEach(prop => { _%>
+      <%_
+        propName = prop.name;
+        selectedValue = prop.enum.selectedValue;
+        if(selectedValue && selectedValue.length > 0){
+         selectedValue = prop.enum.selectedValue;
+        } else{
+         selectedValue = prop.default;
+        }
+        _%>
+  <%_ if (propName === "radius") { _%>
+    this.radius = GSAvatarRadius.$<%= selectedValue %>,
+  <%_ } _%>
+  <%_ if (propName === "size") { _%>
+    this.size = GSAvatarSizes.$<%= selectedValue %>,
+  <%_ } _%>
+  <%_ if (propName === "bg") { _%>
+    this.bg = <%_ if(prop.value) {_%> '<%= prop.value %>'
+  <%_ }, _%>,
+  <%_ } _%>
+  <%_ if (propName === "textColor") { _%>
+    this.textColor = <%_ if(prop.value) {_%> '<%= prop.value %>'
+  <%_ }, _%>,
+  <%_ } _%>
+  <%_ if (propName === "imageUrl") { _%>
+    this.imageUrl <%_ if(prop.value) {_%> '<%= prop.value %>'
+  <%_ }, _%> ,
+  <%_ } _%>
+  <%_ if (propName === "imageType") { _%>
+    this.imageType = GSImageType.<%= selectedValue %>,
+  <%_ } _%>
+  <%_ if (propName === "fontSize") { _%>
+    this.fontSize = <%= selectedValue %>,
+  <%_ } _%>
+  <%_ if (propName === "fontWeight") { _%>
+    this.fontWeight = GSFontWeights.<%= selectedValue %>,
+  <%_ } _%>
+  <%_ if (propName === "enableBadge") { _%>
+    this.enableBadge = <%= selectedValue %>,
+  <%_ } _%>
+  <%_ }); _%>
+  <%_ } _%>
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: GSAvatar(
+        avatarImage: imageUrl != null
+            ? GSImage(path: imageUrl ?? '', imageType: imageType)
+            : null,
+        radius: radius,
+        size: size,
+        fallBackText: GSAvatarFallBackText(
+          fallBackText ?? '',
+          style: GSStyle(
+            textStyle: TextStyle(
+              fontSize: fontSize ?? $GSFontSize.$xl,
+              fontWeight: fontWeight ?? $GSFontWeights.bold,
+              color: textColor,
+            ),
+            color: textColor,
+          ),
+        ),
+        style: GSStyle(
+          bg: $GSColors.primary0,
+        ),
+        avatarBadge: enableBadge
+            ? GSAvatarBadge(
+                style: GSStyle(
+                  bg: bg,
+                  textStyle: TextStyle(color: textColor),
+                ),
+              )
+            : null,
+      ),
+    );
+  }
+}

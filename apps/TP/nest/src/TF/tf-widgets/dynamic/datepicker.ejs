@@ -1,0 +1,159 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../exports.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final String hintText;
+  final DateTime? selectedDate;
+  final DatePickerSize size;
+  final DatePickerVariant variant;
+  final String dateFormat;
+  final Function(DateTime?)? onChanged;
+
+  const <%= relation[0] %>({
+    super.key,
+    this.onChanged,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "selectedDate") { _%>
+    this.selectedDate <%_ if(prop.value){ _%> = '<%= prop.value %>' <%_ } _%>,
+        <%_ } _%>
+        <%_ if (propName === "size") { _%>
+    this.size = DatePickerSize.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "variant") { _%>
+    this.variant = DatePickerVariant.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "dateFormat") { _%>
+    this.dateFormat <%_ if(prop.value) {_%> = '<%= prop.value %>',<%_ } else{ _%> = 'yyyy-MM-dd' <%_ } _%>,
+        <%_ } _%>
+      <%_ }); _%>
+      <%_ if(data.elementInfo.label){ _%>
+    this.hintText = '<%= data.elementInfo.label %>',
+      <%_ } _%>
+    <%_ } _%>
+  });
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  DateTime? _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.selectedDate;
+  }
+
+  void _onChanged(DateTime? newDate) {
+    setState(() {
+      _selectedDate = newDate;
+    });
+    if (widget.onChanged != null) {
+      widget.onChanged!(newDate);
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) _onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double height = 20;
+    double padding;
+    double fontSize;
+
+    switch (widget.size) {
+      case DatePickerSize.xl:
+        padding = 20.0;
+        fontSize = 18.0;
+        height = 50;
+        break;
+      case DatePickerSize.lg:
+        padding = 16.0;
+        fontSize = 16.0;
+        height = 45;
+        break;
+      case DatePickerSize.md:
+        padding = 12.0;
+        fontSize = 14.0;
+        height = 40;
+        break;
+      case DatePickerSize.sm:
+        padding = 8.0;
+        fontSize = 12.0;
+        height = 35;
+        break;
+    }
+
+    BoxDecoration getVariant() {
+      switch (widget.variant) {
+        case DatePickerVariant.underlined:
+          return BoxDecoration(
+            border: const Border(
+              bottom: BorderSide(color: Colors.grey, width: 1.0),
+            ),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case DatePickerVariant.outline:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case DatePickerVariant.rounded:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(50),
+              right: Radius.circular(50),
+            ),
+          );
+        default:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+      }
+    }
+
+    return GestureDetector(
+      onTap: () => _selectDate(context),
+      child: Container(
+        height: height,
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        decoration: getVariant(),
+        child: Center(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _selectedDate != null
+                  ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+                  : widget.hintText,
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

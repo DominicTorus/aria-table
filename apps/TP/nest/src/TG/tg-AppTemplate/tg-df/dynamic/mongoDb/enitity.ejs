@@ -1,0 +1,31 @@
+<%_ let columnForEntity = data _%>
+<%_ let tabName = relation.toLowerCase() _%>
+import { <%= tabName %> } from '@prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class  <%= tabName.toLowerCase() %>Entity implements  <%= tabName %> {
+    <%_ columnForEntity.forEach((col)=> {_%>
+      <%_ if(col.cname ===''){ _%>
+      <%_ } else { _%>
+        @ApiProperty()
+        <%= col.cname.toLowerCase() %>:<% if (col.dataType.selectedValue === 'Int' && col.length !==''){ %>any<% } else if (col.dataType.selectedValue === 'String?'|| col.constraints ==="@id @default(autoincrement())" ){ %>string<% } else if (col.dataType.selectedValue === 'DateTime' || col.dataType.selectedValue === 'DateTime?'){ %>Date<% } else if(col.dataType.selectedValue === 'Int' && col.constraints !=="@id @default(autoincrement())") {%> number<%_ } else {%> <%= col.dataType.selectedValue.toLowerCase() %><%_ } _%>;
+        <%_ } _%>
+        <%_ }) _%>
+        @ApiProperty()
+        created_date: Date;
+        @ApiProperty()
+        created_by: string;
+        @ApiProperty()
+        modified_date: Date;
+        @ApiProperty()
+        modified_by: string;
+        @ApiProperty()
+        status: string;
+        @ApiProperty()
+        next_status: string;
+        @ApiProperty()
+        process_id: string;
+    }
+      
+   
+  export { <%= tabName %> };

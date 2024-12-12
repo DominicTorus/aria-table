@@ -1,0 +1,87 @@
+'use client'
+import React from 'react'
+import { Button, Col, Modal, Row, TextInput } from '@gravity-ui/uikit'
+import { PencilToLine } from '@gravity-ui/icons'
+import { Grid } from '@gravity-ui/page-constructor'
+import {SquarePlus} from '@gravity-ui/icons';
+const AddTableData = ({ Columns, setRefetch }: any) => {
+  const [open, setOpen] = React.useState(false)
+  const [data, setData] = React.useState<any>({})
+  const cookies = document.cookie.split(';')
+  const upId = cookies.find(Cookie => Cookie.trim().startsWith('upId='))
+  const upIdValue: string | any = upId?.split('=')[1]
+  const dfKey = cookies.find(Cookie => Cookie.trim().startsWith('dfKey='))
+  const dfKeyValue: string | any = dfKey?.split('=')[1]
+  const token = cookies.find(Cookie => Cookie.trim().startsWith('token='))
+  const tokenValue: string | any = token?.split('=')[1]
+  const sfKey: any = ' '
+
+  const handleChange = (e: any, type: string) => {
+    if (type == 'number') {
+      setData((prev: any) => ({ ...prev, [e.target.name]: +e.target.value }))
+    } else if (type == 'text') {
+      setData((prev: any) => ({ ...prev, [e.target.name]: e.target.value }))
+    }
+  }
+
+  const handleSave = async () => {}
+  const handleClear = () => {
+    var keys: any = {}
+    Columns.map((item: any) => {
+      keys[item.id] = ''
+    })
+    setData(keys)
+  }
+
+  return (
+    <div>
+      <div className="p-4">
+
+        <SquarePlus onClick={() => setOpen(true)} />
+      </div>
+      <Modal
+        open={open}
+        onClose={() => {
+          setOpen(false)
+        }}
+      >
+        <div className='w-full gap-4 p-6'>
+          <Row
+            space={{ s: '4', m: '4', l: '4', xl: '4' }}
+            spaceRow={{ s: '4', m: '4', l: '4', xl: '4' }}
+          >
+            {Columns &&
+              Columns.map((key: any, index: any) => {
+                return (
+                  <Col s='6' m='6' l='6' xl='6' key={index}>
+                    <TextInput
+                      label={key.header}
+                      name={key.id}
+                      onChange={e => handleChange(e, key.type)}
+                      id={key.id}
+                      type={key.type}
+                      value={data[key.id]}
+                      hasClear
+                    />
+                  </Col>
+                )
+              })}
+          </Row>
+          <div className='flex justify-end gap-4 p-4'>
+            <Button onClick={handleClear}>Clear</Button>
+            <Button
+              onClick={() => {
+                setOpen(false)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+export default AddTableData

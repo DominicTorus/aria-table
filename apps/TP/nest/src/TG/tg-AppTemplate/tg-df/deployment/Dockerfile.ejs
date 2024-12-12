@@ -1,0 +1,46 @@
+# Stage 1: Install dependencies
+FROM node:20 AS dependencies
+WORKDIR /app
+
+# Copy only the package files to leverage Docker caching for dependencies
+COPY package*.json ./
+# Install all dependencies (including dev dependencies for Prisma generation)
+RUN npm install
+
+# Copy Prisma schema and generate Prisma client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Stage 2: Build the NestJS application
+FROM node:20 AS builder
+WORKDIR /app
+
+# Copy package files and install dependencies again (only production dependencies)
+COPY package*.json ./
+RUN npm install
+
+# Copy the generated Prisma client, source code, and other necessary files
+COPY --from=dependencies /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=dependencies /app/node_modules/@prisma ./node_modules/@prisma
+COPY . .
+
+# Build the TypeScript code
+RUN npm run build
+
+# Stage 3: Final stage - Run the application
+FROM node:20 AS runner
+WORKDIR /app
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.env ./.env
+
+# Expose the application port
+EXPOSE 3010
+
+# Set environment variables if needed (optional)
+#ENV NODE_ENV=production
+
+# Run the application
+CMD ["node", "dist/main"]

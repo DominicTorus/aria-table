@@ -1,0 +1,37 @@
+import { codeDescription } from '@prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class  codeDescriptionEntity implements  codeDescription {
+        @ApiProperty()
+        ccdId: number;
+        @ApiProperty()
+        cdCategory: string;
+        @ApiProperty()
+        ClientCode: string;
+        @ApiProperty()
+        code: string;
+        @ApiProperty()
+        description: string;
+        @ApiProperty()
+        parentCode: string;
+        @ApiProperty()
+        sortOrder: number;
+        @ApiProperty()
+        created_date: Date;
+        @ApiProperty()
+        created_by: string;
+        @ApiProperty()
+        modified_date: Date;
+        @ApiProperty()
+        modified_by: string;
+        @ApiProperty()
+        status: string;
+        @ApiProperty()
+        next_status: string;
+        @ApiProperty()
+        process_id: string;
+        
+    }
+      
+   
+  export { codeDescription };

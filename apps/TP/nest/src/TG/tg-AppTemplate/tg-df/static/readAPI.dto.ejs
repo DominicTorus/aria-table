@@ -1,0 +1,33 @@
+import { ApiProperty } from "@nestjs/swagger";
+
+export class readAPIDTO {
+    @ApiProperty({ description: 'Source', example: 'redis' })
+    SOURCE: string;
+ 
+    @ApiProperty({ description: 'Target', example: 'mongo' })
+    TARGET: string;
+ 
+    @ApiProperty({ description: 'CK', example: 'TCL' })
+    CK: string; 
+   
+    @ApiProperty({ description: 'FNGK', example: 'AF' })
+    FNGK: string;
+ 
+    @ApiProperty({ description: 'FNK', example: 'DF' })
+    FNK: string;
+ 
+    @ApiProperty({ description: 'CATK', example: ['FINTECH'] })
+    CATK: string[];
+ 
+    @ApiProperty({ description: 'AFGK', example: ['VPHCoreMaster'] })
+    AFGK: string[];
+ 
+    @ApiProperty({ description: 'AK', example: ['bankmaster'] })
+    AFK: string[];
+ 
+    @ApiProperty({ description: 'AFVK', example: ['v1'] })
+    AFVK: string[];
+ 
+     @ApiProperty({ description: 'AFSK', example: ['nodeProperty'] })
+    AFSK: string;
+  }

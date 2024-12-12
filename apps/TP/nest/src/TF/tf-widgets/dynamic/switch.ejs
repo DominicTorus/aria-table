@@ -1,0 +1,48 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final bool value;
+  final bool? isDisabled;
+  final GSSwitchSizes size;
+  final Color? activeTrackColor;
+  final Color? trackColor;
+  final Color? thumbColor;
+  final Color? activeThumbColor;
+  final void Function(bool)? onToggle;
+
+  const <%= relation[0] %>({
+    super.key,
+    required this.value,
+    this.onToggle,
+    this.isDisabled = false,
+    this.size = GSSwitchSizes.$md,
+    this.activeTrackColor,
+    this.trackColor,
+    this.thumbColor,
+    this.activeThumbColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSSwitch(
+      size: size,
+      isDisabled: isDisabled,
+      style: GSStyle(
+        checked: GSStyle(
+          trackColorTrue: activeTrackColor,
+          trackColorFalse: trackColor,
+          thumbColor: thumbColor,
+          activeThumbColor: activeThumbColor,
+        ),
+      ),
+      value: value,
+      onToggle: (bool newValue) {
+        if (onToggle != null) {
+          onToggle!(newValue);
+        }
+      },
+    );
+  }
+}

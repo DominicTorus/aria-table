@@ -1,0 +1,16 @@
+import { Controller } from "@nestjs/common";
+import { <%= data %>Service } from "./<%= data.toLowerCase() %>.service";
+import { EventPattern } from "@nestjs/microservices";
+import { <%= event %> } from "src/TE/Dto/<%= event.toLowerCase() %>";
+
+@Controller('ts')
+export class <%= data %>Controller {
+    constructor(private readonly <%= data.toLowerCase() %>Service: <%= data %>Service){}
+
+    <%_ relation.forEach((key) => { _%>
+        @EventPattern('<%= key %>') 
+        async <%= key %>(input: <%= event %>) { 
+           return await this.<%= data.toLowerCase() %>Service.get<%= data %>Process(input)
+        }       
+   <% }) %> 
+}

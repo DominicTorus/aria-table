@@ -1,0 +1,29 @@
+import '../exports.dart';
+
+class Constants {
+  static String baseUrl = dotenv.env['BASE_URL'] ?? '';
+
+  // Login
+  static String login = '$baseUrl/api/signin';
+
+  // URLS
+  static String ufKeyDetails = '$baseUrl/UF/dfKey?ufKey=';
+  static String getPFDetails = '$baseUrl/UF/getPFDetails';
+  static String initiatePFDetails = '$baseUrl/UF/InitiatePF';
+  static String getIFODetails = '$baseUrl/UF/ifo';
+  static String eventEmitter = '$baseUrl/te/eventEmitter';
+
+  static String handleSave = '$baseUrl/handler/save';
+  static String handleUpdate = '$baseUrl/handler/update';
+
+  // Get List Data
+  static String refreshList = '$baseUrl/api/pagination';
+  static String getDFDetails = '$baseUrl/te/df';
+  static String getRuleDetails = '$baseUrl/UF/fetchRuleDetails';
+  static String filterDetails = '$baseUrl/UF/PaginationDataFilter';
+  static String getActions = '$baseUrl/UF/fetchActionDetails'; 
+  static String getPaginationDetails = '$baseUrl/api/pagination'; 
+
+  // GET DROPDOWN DATA
+  static String getMapperDetails = '$baseUrl/UF/getMapperDetails';
+}

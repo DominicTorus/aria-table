@@ -1,0 +1,80 @@
+import 'package:flutter/foundation.dart';
+
+class DataModel with ChangeNotifier {
+  final List<dynamic> _dataList = [];
+  final Map<String, dynamic> _lockDetails = {};
+  final Map<String, dynamic> _ifo = {};
+  Map<String, dynamic> _formData = {};
+  final List<Map<String, dynamic>> _tableData = [];
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+  List<dynamic> get dataList => _dataList;
+  Map<String, dynamic> get lockDetails => _lockDetails;
+  Map<String, dynamic> get ifo => _ifo;
+  Map<String, dynamic> get formData => _formData;
+  List<Map<String, dynamic>> get tableData => _tableData;
+
+  void setFormData(Map<String, dynamic> data) {
+    _formData = data;
+    notifyListeners();
+  }
+
+  void clearFormData() {
+    _formData.clear();
+    notifyListeners();
+  }
+
+
+  void setLoaderState(bool state) {
+    _isLoading = state;
+    notifyListeners();
+  }
+
+  void addData(dynamic newData) {
+    _dataList.add(newData);
+    notifyListeners();
+  }
+
+  void clearData() {
+    _dataList.clear();
+    notifyListeners();
+  }
+
+  void removeData(dynamic item) {
+    _dataList.remove(item);
+    notifyListeners();
+  }
+
+  void removeDataAt(int index) {
+    if (index >= 0 && index < _dataList.length) {
+      _dataList.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  void setLockDetails(String key, dynamic value) {
+    _lockDetails[key] = value;
+    notifyListeners();
+  }
+
+  dynamic getLockDetail(String key) {
+    return _lockDetails[key];
+  }
+
+  void setIFO(String key, dynamic value) {
+    _ifo[key] = value;
+    notifyListeners();
+  }
+
+  dynamic getIFO(String key) {
+    return _ifo[key];
+  }
+
+  // TABLE DATA PROVIDER
+
+  void addTableData(Map<String, dynamic> data) {
+    _tableData.add(data);
+    notifyListeners();
+  }
+}

@@ -1,0 +1,15 @@
+'use client'
+import Navbar from '@/app/components/navBar'
+<%_ let navBarData=data _%>
+
+const GroupNav = ({ nodeDetails }: any) => {
+    
+  const navBarData = <%- JSON.stringify(navBarData, null, 2)  %>
+  return (
+    <div className='col-span-1 bg-gray-100 sm:col-span-12 md:col-span-6 lg:col-span-12 lg:col-start-1 xl:col-span-12 xl:col-start-1'>
+      <Navbar data={navBarData} />
+    </div>
+  )
+}
+
+export default GroupNav

@@ -1,0 +1,14 @@
+{
+  "bg": "#FFFFFF",
+  "bgCard": "#F7F8F8",
+  "border": "#00000026",
+  "borderLine": "#E5E9EB",
+  "text": "#000000",
+  "clipPathText": "#FFFFFF",
+  "textOpacity/15": "#00000026",
+  "textOpacity/35": "#00000059",
+  "textOpacity/50": "#00000080",
+  "opacity": "0.35",
+  "profileColor": "#00000059",
+  "name":"Sunrise"
+}

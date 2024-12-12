@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* :root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+} */
+
+* {
+  font-family: "Inter", sans-serif;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+
+input[type="password"]::-ms-reveal,  
+input[type="password"]::-webkit-reveal-button {
+  display: none;
+}
+
+/* Style the scrollbar */
+::-webkit-scrollbar {
+  width: 2px; /* Adjust the width as needed */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Adjust the background color as needed */
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #9d9d9d; /* Adjust the color of the scrollbar handle */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #676767; /* Adjust the color of the scrollbar handle on hover */
+}
+
+:root {
+  --toastify-color-light: #fff;
+  --toastify-color-dark: #121212;
+  --toastify-color-info: #3498db;
+  --toastify-color-success: #4ac000;
+  --toastify-color-warning: #ff9800;
+  --toastify-color-error: #f14336;
+  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+
+  --toastify-icon-color-info: var(--toastify-color-info);
+  --toastify-icon-color-success: var(--toastify-color-success);
+  --toastify-icon-color-warning: var(--toastify-color-warning);
+  --toastify-icon-color-error: var(--toastify-color-error);
+
+  --toastify-toast-width: 320px;
+  --toastify-toast-background: #fff;
+  --toastify-toast-min-height: 64px;
+  --toastify-toast-max-height: 800px;
+  /* --toastify-font-family: sans-serif; */
+  --toastify-z-index: 9999;
+
+  --toastify-text-color-light: #757575;
+  --toastify-text-color-dark: #fff;
+
+  /* Used only for colored theme */
+  --toastify-text-color-info: #fff;
+  --toastify-text-color-success: #fff;
+  --toastify-text-color-warning: #fff;
+  --toastify-text-color-error: #fff;
+
+  --toastify-spinner-color: #616161;
+  --toastify-spinner-color-empty-area: #e0e0e0;
+
+  --toastify-color-progress-light: linear-gradient(
+    to right,
+    #4cd964,
+    #5ac8fa,
+    #007aff,
+    #34aadc,
+    #5856d6,
+    #ff2d55
+  );
+
+  --toastify-color-progress-dark: #bb86fc;
+  --toastify-color-progress-info: var(--toastify-color-info);
+  --toastify-color-progress-success: var(--toastify-color-success);
+  --toastify-color-progress-warning: var(--toastify-color-warning);
+  --toastify-color-progress-error: var(--toastify-color-error);
+
+  --toastify-font-family: Roboto;
+}
+
+/* Custom styles for the toast */
+.Toastify__toast-container .custom-toast {
+  font-family: var(--toastify-font-family);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+  padding: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.custom-toast-lessthan5 {
+  min-height: var(--toastify-toast-min-height);
+  min-width: var(--toastify-toast-width);
+}
+
+.custom-toast-morethan5 {
+  min-width: var(--toastify-toast-width) + 2rem;
+}
+
+.custom-toast-morethan10 {
+  min-width: calc(var(--toastify-toast-width) + 300px);
+}
+
+.custom-toast-morethan50 {
+  min-width: calc(var(--toastify-toast-width) + 20px);
+}
+
+.custom-toast-morethan100 {
+  min-width: calc(var(--toastify-toast-width) + 100px);
+}
+
+/* Add this in your styles.css or within a <style> tag */
+.custom-toast-morethan200 {
+  min-width: calc(var(--toastify-toast-width) + 350px);
+}
+
+.Toastify__toast-container .Toastify__toast--success {
+  background: var(--toastify-color-success);
+  box-shadow:
+    0 1px 10px 0 rgba(0, 0, 0, 0.1),
+    0 0 5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.Toastify__toast-container .Toastify__toast--info {
+  background: var(--toastify-color-info);
+  box-shadow:
+    0 1px 10px 0 rgba(0, 0, 0, 0.1),
+    0 0 5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.Toastify__toast-container .Toastify__toast--error {
+  background: var(--toastify-color-error);
+  box-shadow:
+    0 1px 10px 0 rgba(0, 0, 0, 0.1),
+    0 0 5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.Toastify__toast-container .Toastify__toast--warning {
+  background: var(--toastify-color-warning);
+  box-shadow:
+    0 1px 10px 0 rgba(0, 0, 0, 0.1),
+    0 0 5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.Toastify__toast-container .Toastify__toast-icon {
+  display: none;
+}

@@ -1,0 +1,222 @@
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../exports.dart';
+
+class <%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %> extends StatefulWidget {
+  final List<dynamic>? data;
+  const <%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %>({
+    super.key,
+    this.data,
+  });
+
+  @override
+  State<<%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %>> createState() => _<%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %>();
+}
+
+class _<%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %> extends State<<%= relation.charAt(0).toUpperCase() + relation.slice(1).toLowerCase(); %>> {
+  //TextField Controller
+  <%_ data.forEach((item, index) => { _%>
+    <%_ if(item['type'] === 'textinput') { _%>  
+  final TextEditingController <%= item['elementInfo']['label'].toString().replace(/\s+/g, '') %> = TextEditingController();
+    <%_ } _%>
+    <%_ if(item['type'] === 'textarea') { _%>  
+  final TextEditingController <%= item['elementInfo']['label'].toString().replace(/\s+/g, '') %> = TextEditingController();
+    <%_ } _%>
+  <%_}) _%>
+
+    <%_
+      let formData = [];
+      let rows = {};
+      let groupedWidgets = {};
+      let row;
+      let order;
+      let length;
+      let alignment = 'center';
+      let field;
+      let propName;
+      let selectedValue;
+      let lastIndex = 0;
+      let selectedDropdownValues = [];
+      let selectedCheckBoxValues = [];
+      let requiredFields = [];
+      // let nonRequiredFields = [];
+     
+      // Widget Generation
+      if(data.toString()){
+        data.forEach((item, index) => {
+       if (item['type'] === 'group') {
+          if (!groupedWidgets[item['id']]) {
+              groupedWidgets[item['id']] = [];
+          }
+
+          if (item['groupType'] === 'table') {
+            let field = `GTable(`;
+            field += `),`;
+          
+            groupedWidgets[item['id']].push(field);
+          } else if (item['groupType'] === 'list') {
+            
+            groupedWidgets[item['id']].push(field);
+          }else {
+              // groupedWidgets[item['id']].push(otherWidgetField);
+          }
+        } else {
+          switch (item['type']) {
+            case 'button':
+              field = `GButton(`;
+              field += `),`;
+              break;
+            case 'textinput':
+              field = `GInput(`;
+              field += `),`;
+              formData.push(item['elementInfo']['label'].toString().replace(/\s+/g, ''));
+              break;
+            case 'checkbox':
+              field = `GCheckbox(`;
+              field += `),`;
+              break;
+            case 'textarea':
+              field = `GTextArea(`;
+              field += `),`;
+              break;
+            case 'dropdown':
+              field = `GDropdown(`;
+             field += `),`;
+              break;
+            default:
+              field = 'const SizedBox()';
+          }
+
+          //Layout Generation
+          if (item['elementInfo'].hasOwnProperty('layout')) {
+            for (let i = 0; i < item['elementInfo']['layout'].length; i++) {
+              if (item['elementInfo']['layout'][i]['name'] === "orientation" && item['elementInfo']['layout'][i]['value']) {
+                order = item['elementInfo']['layout'][i]['value'];
+                row = parseInt(order.split('.')[0]);
+              }
+              if (item['elementInfo']['layout'][i]['name'] === "length") {
+                length = item['elementInfo']['layout'][i]['default'];
+              }
+              if (item['elementInfo']['layout'][i]['name'] === "length" && item['elementInfo']['layout'][i]['value']) {
+                length = item['elementInfo']['layout'][i]['value'];
+              }
+              if (item['elementInfo']['layout'][i]['name'] === 'alignment' && item['elementInfo']['layout'][i]['enum']['selectedValue']) {
+                switch (item['elementInfo']['layout'][i]['enum']['selectedValue'].toString()) {
+                  case 'topLeft': alignment = 'topLeft'; break;
+                  case 'topCenter': alignment = 'topCenter'; break;
+                  case 'topRight': alignment = 'topRight'; break;
+                  case 'centerLeft': alignment = 'centerLeft'; break;
+                  case 'center': alignment = 'center'; break;
+                  case 'centerRight': alignment = 'centerRight'; break;
+                  case 'bottomLeft': alignment = 'bottomLeft'; break;
+                  case 'bottomCenter': alignment = 'bottomCenter'; break;
+                  case 'bottomRight': alignment = 'bottomRight'; break;
+                  default: alignment = 'center';
+                }
+              } 
+              if (!rows[row]) {
+                rows[row] = [];
+              }
+            }
+            
+            rows[row].push(`Flexible(
+                flex: ${parseInt(length)},
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.${alignment},
+                    child: ${field}
+                  ),
+                ),
+              )`
+            ); 
+
+            if (groupedWidgets[item['T_parentId']] && row != lastIndex) {
+              groupedWidgets[item['T_parentId']].push(rows[row]);
+              lastIndex = row;
+            } 
+          }
+        }
+      });
+    }
+
+    const jsonObject = formData.reduce((acc, field) => {
+      if (field.startsWith('dropdown_')) {
+        const key = field.replace('dropdown_', '');
+        acc[key] = key; 
+      } else {
+        acc[field] = `${field}.text`;
+      }
+      return acc;
+    }, {});
+    
+    let groupedRows = Object.keys(groupedWidgets).map((groupId) => { 
+      return `SizedBox(height: 20),
+        GSBox(
+          child: VStack(
+            children: [
+              ${groupedWidgets[groupId].map(group => {
+        return `HStack(
+                  children: [
+                    ${group}
+                  ],
+                )`;
+              })}
+            ],
+          ),
+        ),`;
+      }); 
+    _%>
+
+  //Dropdown keys
+  <%_ if(selectedDropdownValues.length > 0){ _%>
+    <%_ selectedDropdownValues.map((dropdownKeys) => { _%>
+  String? <%= dropdownKeys %>;
+    <%_ }) _%>
+  <%_ } _%>
+
+  // Checkbox keys
+  <%_ if(selectedCheckBoxValues.length > 0){ _%>
+    <%_ selectedCheckBoxValues.map((checkboxKeys) => { _%>
+  bool? <%= checkboxKeys %>;
+    <%_ }) _%>
+  <%_ } _%>
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+    <%_ if(data.toString()){ _%>
+      <%_ data.forEach((e) => { _%>
+          <%_ if (e['type'] === 'appbar') { _%>
+          appBar : GAppBar(
+              title : '<%= e['label'] %>',
+            actions: [
+              IconButton(
+                onPressed: () {
+                  UserSecureStorage.delToken(UserSecureStorage.tokenKey.toString());
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (context) => const TenantLogin(),
+                  ));
+                },
+                icon: Icon(Icons.logout),
+              )
+            ],
+          ),
+          <%_ } _%>
+      <%_ }) _%>
+    <%_ } _%>
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: VStack(
+          children: <Widget>[
+            <%_ groupedRows.forEach(group => { _%>
+                <%= group %>
+            <%_ }); _%>
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,103 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final GSTextAreaSizes? size;
+  final String hintText;
+  final bool isDisabled;
+  final bool isInvalid;
+  final TextEditingController? controller;
+  final int? maxLength;
+  final void Function()? onEditingComplete;
+  final TextInputType? keyboardType;
+  final int? maxLines;
+  final TextAlign textAlign;
+  final String? helperText;
+  final Widget? prefix;
+  final Widget? suffix;
+  final TextAlignVertical textAlignVertical;
+  final bool showCursor;
+  final TextCapitalization textCapitalization;
+
+  const <%= relation[0] %>({
+    super.key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "size") { _%>
+          this.size = GSTextAreaSizes.$<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isDisabled") { _%>
+          this.isDisabled = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "maxLength" && parseInt(prop.value)) { _%>
+          this.maxLength = int.tryParse(<%=(prop.value) %>);
+        <%_ } _%>
+        <%_ if (propName === "maxLines" && parseInt(prop.value)) { _%>
+          this.maxLines = int.tryParse(<%=(prop.value) %>);
+        <%_ } _%>
+        <%_ if (propName === "textAlign") { _%>
+          this.textAlign = TextAlign.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "helperText") { _%>
+          this.helperText = <%=(prop.value) %>
+        <%_ } _%>
+        <%_ if (propName === "prefix") { _%>
+          this.prefix = <%=(prop.value) %>
+        <%_ } _%>
+        <%_ if (propName === "suffix") { _%>
+          this.suffix = <%=(prop.value) %>
+        <%_ } _%>
+        <%_ if (propName === "textAlignVertical") { _%>
+          this.textAlignVertical = TextAlignVertical.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "showCursor") { _%>
+          this.showCursor = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textCapitalization") { _%>
+          this.textCapitalization = TextCapitalization.<%= selectedValue %>,
+        <%_ } _%>
+      <%_ }); _%>
+      <%_ if(data.elementInfo.label){ _%>
+        this.hintText = '<%= data.elementInfo.label %>',
+      <%_ } _%>
+    <%_ } _%>
+    this.isInvalid = false,
+    this.controller,
+    this.onEditingComplete,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSTextArea(
+      size: size,
+      hintText: hintText,
+      isDisabled: isDisabled,
+      isInvalid: isInvalid,
+      controller: controller,
+      maxLength: maxLength,
+      onChanged: onChanged,
+      onEditingComplete: onEditingComplete,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      textAlign: textAlign,
+      helperText: helperText,
+      prefixIcon: prefix,
+      suffixIcon: suffix,
+      textAlignVertical: textAlignVertical,
+      showCursor: showCursor,
+      textCapitalization: textCapitalization,
+    );
+  }
+}

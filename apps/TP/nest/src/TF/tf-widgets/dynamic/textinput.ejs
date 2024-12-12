@@ -1,0 +1,162 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let code = data1[3]; _%>
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final GSInputSizes? size;
+  final GSInputVariants? variant;
+  final String? hintText;
+  final bool isDisabled;
+  final bool isReadOnly;
+  final int? maxLength;
+  final TextInputType? keyboardType;
+  final TextAlign textAlign;
+  final TextAlignVertical textAlignVertical;
+  final bool showCursor;
+  final TextCapitalization textCapitalization;
+  final bool isPassword;
+  final String? helperText;
+  final Widget? prefix;
+  final Widget? suffix;
+  final TextEditingController? controller;
+  final void Function(String)? onChanged;
+  final void Function(String)? onFieldSubmitted;
+  final String? Function(String?)? validator;
+
+  const <%= relation[0] %>({
+    super.key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "size") { _%>
+    this.size = GSInputSizes.$<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "variant") { _%>
+    this.variant = GSInputVariants.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isDisabled") { _%>
+    this.isDisabled = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isPassword") { _%>
+    this.isPassword = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "maxLength") { _%>
+    this.maxLength <%_ if(prop.value){ _%>  = int.tryParse('<%= prop.value %>') <%_ } _%>,
+        <%_ } _%>
+        <%_ if (propName === "inputType") { _%>
+    this.keyboardType = TextInputType.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textAlign") { _%>
+    this.textAlign = TextAlign.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textAlignVertical") { _%>
+    this.textAlignVertical = TextAlignVertical.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "showCursor") { _%>
+    this.showCursor = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textCapitalization") { _%>
+    this.textCapitalization = TextCapitalization.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "helperText") { _%>
+    this.helperText = '<%= prop.value %>',
+        <%_ } _%>
+        <%_ if (propName === "prefix") { _%>
+    this.prefix <%_ if(prop.value){ _%> = const Icon(Icons.'<%= prop.value %>') <%_ } _%>,
+        <%_ } _%>
+        <%_ if (propName === "suffix") { _%>
+    this.suffix <%_ if(prop.value){ _%> = const Icon(Icons.<%= prop.value %>) <%_ } _%>,
+        <%_ } _%>
+    <%_ }); _%>
+    <%_ if(data.elementInfo.label){ _%>
+    this.hintText = '<%= data.elementInfo.label %>',
+    <%_ } _%>
+    <%_ } _%>
+    this.validator,
+    this.isReadOnly = false,
+    this.controller,
+    this.onChanged,
+    this.onFieldSubmitted,
+    
+  });
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  bool _obscureText = false;
+  bool _isInvalid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.isPassword;
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  void _handleInputChange(String value) {
+    if (widget.validator != null) {
+      final error = widget.validator!(value);
+      setState(() {
+        _isInvalid = error != null && error.isNotEmpty;
+      });
+    }
+    widget.onChanged?.call(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GSInput(
+      size: widget.size,
+      variant: widget.variant,
+      hintText: widget.hintText,
+      isDisabled: widget.isDisabled,
+      isReadOnly: widget.isReadOnly,
+      isInvalid: _isInvalid,
+      controller: widget.controller,
+      maxLength: widget.maxLength,
+      onChanged: _handleInputChange,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      keyboardType: widget.keyboardType,
+      textAlign: widget.textAlign,
+      textAlignVertical: widget.textAlignVertical,
+      showCursor: widget.showCursor,
+      textCapitalization: widget.textCapitalization,
+      obscureText: _obscureText,
+      prefixIcon: widget.prefix,
+      suffixIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.isPassword)
+            IconButton(
+              icon:
+                  Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+              onPressed: _togglePasswordVisibility,
+            ),
+          if (widget.suffix != null) widget.suffix!,
+        ],
+      ),
+      helperText: widget.helperText,
+      hintStyle: TextStyle(color: $GSColors.primary0, fontSize: $GSFontSize.$md),
+      style: GSStyle(
+        color: $GSColors.primary0,
+      ),
+    );
+  }
+}

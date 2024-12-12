@@ -1,0 +1,617 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let ufKey = relation[1]; _%>
+<%_ let groupName = data1[1]; _%>
+<%_ let controlName = data1[1]; _%>
+import 'package:flutter/material.dart';
+import '../../../exports.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final bool needPagination;
+  final bool needSearchBar;
+  final bool needPerPageSelector;
+  final int itemsPerPage;
+  final SelectionType selectionType;
+  final String connectedSource;
+  final List<String> allowedColumns;
+  final List<String> actions;
+
+  const <%= relation[0] %>({
+    super.key,
+    this.needPagination = false,
+    this.itemsPerPage = 10,
+    this.needPerPageSelector = false,
+    this.needSearchBar = false,
+    this.selectionType = SelectionType.multi,
+    this.allowedColumns = const [ <%_ relation[2].map((col)=> { _%>'<%= col %>', <%_ }) _%> ],
+    this.actions = const [],
+    this.connectedSource = '',
+  });
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _ApprovalformApprovalTableState extends State<ApprovalformApprovalTable> {
+  List<dynamic> items = [];
+  List<dynamic> _filteredItems = [];
+  List<bool> _selectedRows = [];
+  bool _selectAll = false;
+  int _currentPage = 1;
+  int _totalPages = 0;
+  int _itemsPerPage = 10;
+  bool _isLoading = false;
+  String? page = '';
+  String dfkey = '';
+  String processkey = '';
+  String? _totalRecords;
+  ViewType _currentViewType = ViewType.table;
+  SelectionType selectionType = SelectionType.multi;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await getActionsDeatils();
+    await getDFkey('<%= ufKey %>');
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  // GET TABLE DATA
+  Future<void> getDFkey(String ufKey) async {
+    try {
+      final response =
+          await ApiService.get('${Constants.ufKeyDetails}<%= ufKey %>', null);
+      if (response!.statusCode == 200) {
+        setState(() {
+          dfkey = jsonDecode(response.body)[0].toString();
+        });
+        await refreshlistData('<%= ufKey %>');
+      } else {
+        Common.flutterToaster('Error getting DF key', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching DF key', 'f');
+    }
+  }
+
+  Future<void> refreshlistData(String ufKey) async {
+    final token = await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+    try {
+      final response = await ApiService.post(Constants.refreshList, {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      }, {
+        "key": dfkey,
+        "upId": ""
+      });
+      if (response!.statusCode == 201) {
+        await getDF('<%= ufKey %>');
+      } else {
+        Common.flutterToaster('Error refreshing list', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error refreshing list', 'f');
+    }
+  }
+
+  Future<void> getDF(String ufKey) async {
+    final token = await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+    try {
+      final response = await ApiService.post(Constants.getDFDetails, {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      }, {
+        "key": dfkey
+      });
+      if (response!.statusCode == 201) {
+        setState(() {
+          processkey = jsonDecode(response.body)['processKey'];
+        });
+        await getRuleDetails(
+            '<%= ufKey %>', '<%_ groupName _%>', '<%_ controlName _%>');
+      } else {
+        Common.flutterToaster('Error getting Data Source', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error getting Data Source', 'f');
+    }
+  }
+
+  Future<void> getRuleDetails(
+      String ufKey, String groupName, String controlName) async {
+    try {
+      final rulwDetails = await ApiService.post(Constants.getRuleDetails, {
+        'Content-Type': 'application/json',
+        //'Authorization': 'Bearer $token'
+      }, {
+        "key": '<%= ufKey %>',
+        "groupName": '<%_ groupName _%>',
+        "controlName": '<%_ controlName _%>'
+      });
+      if (rulwDetails!.statusCode == 201) {
+        if (jsonDecode(rulwDetails.body).runtimeType == String) {
+          final response =
+              await ApiService.post(Constants.getPaginationDetails, {
+            'Content-Type': 'application/json',
+            //'Authorization': 'Bearer $token'
+          }, {
+            "key": processkey.toString(),
+            "page": _currentPage.toString(),
+            "count": "10",
+          });
+          if (response!.statusCode == 201) {
+            final jsonResponse = jsonDecode(response.body);
+            final records = jsonResponse['records'];
+            if (records != null && records.isNotEmpty) {
+              final filterData =
+                  await ApiService.post(Constants.filterDetails, {
+                'Content-Type': 'application/json',
+                //'Authorization': 'Bearer $token'
+              }, {
+                "data": records,
+                "key": '<%= ufKey %>'
+              });
+              if (filterData!.statusCode == 201) {
+                final jsonData = jsonDecode(filterData.body);
+                setState(() {
+                  _filteredItems = jsonData['records'];
+                });
+              } else {
+                Common.flutterToaster('Error fetching filtered details', 'f');
+              }
+            } else {
+              Common.flutterToaster('No records found.', 'i');
+            }
+          } else {
+            Common.flutterToaster('Error fetching pagination details', 'f');
+          }
+        } else {
+          await getPagination(1);
+        }
+      }
+    } catch (e) {
+      Common.flutterToaster('Something went wrong', 'f');
+    }
+  }
+
+  Future<void> getPagination(int page) async {
+    try {
+      final response = await ApiService.post(Constants.refreshList, {
+        'Content-Type': 'application/json',
+        //'Authorization': 'Bearer $token'
+      }, {
+        "key": processkey.toString(),
+        "page": page.toString(),
+        "count": _itemsPerPage.toString(),
+        "filterDetails": {
+          "ufKey": "<%= ufKey %>:UO",
+          "nodeName": '<%_ groupName _%>',
+          "elementName": '<%_ controlName _%>'
+        }
+      });
+      if (response!.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final records = jsonResponse['records'];
+        //_totalRecords = jsonResponse['totalRecords'];
+        if (records != null && records.isNotEmpty) {
+          final filterData = await ApiService.post(Constants.filterDetails, {
+            'Content-Type': 'application/json',
+            //'Authorization': 'Bearer $token'
+          }, {
+            "data": records,
+            "key": '<%= ufKey %>'
+          });
+          if (filterData!.statusCode == 201) {
+            final jsonData = jsonDecode(filterData.body);
+            setState(() {
+              _filteredItems = jsonData;
+            });
+          } else {
+            Common.flutterToaster('Error fetching filtered data details', 'f');
+          }
+        } else {
+          Common.flutterToaster('No records found', 'w');
+        }
+      } else {
+        Common.flutterToaster('Error fetching pagination details', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching pagination details', 'f');
+    }
+  }
+
+  Future<void> getActionsDeatils() async {
+    try {
+      final response = await ApiService.post(Constants.getActions, {
+        'Content-Type': 'application/json',
+        //'Authorization': 'Bearer $token'
+      }, {
+        "key": '<%= ufKey %>',
+        "groupName": '<%_ groupName _%>',
+        "controlName": '<%_ controlName _%>'
+      });
+      if (response!.statusCode == 201) {
+        setState(() {
+          _itemsPerPage = int.tryParse(
+                  jsonDecode(response.body)['paginationDetails']['count']) ??
+              10;
+          _currentPage = int.tryParse(
+                  jsonDecode(response.body)['paginationDetails']['page']) ??
+              1;
+          Provider.of<DataModel>(context, listen: false).setLockDetails(
+              'lockDetails', jsonDecode(response.body)['lockDetails']);
+          selectionType = jsonDecode(response.body)['lockDetails']['lockMode']
+                      .toString()
+                      .toLowerCase() ==
+                  'multi'
+              ? SelectionType.multi
+              : SelectionType.single;
+        });
+      } else {
+        Common.flutterToaster('Error fetchActionDetails', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching action details', 'f');
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    setState(() {
+      _currentViewType = isMobile ? ViewType.list : ViewType.table;
+    });
+  }
+
+  void _filterItems(String query) {
+    setState(() {
+      query = query.toLowerCase();
+      _filteredItems = items.where((item) {
+        return item.values.any((value) {
+          if (value is String) {
+            return value.toLowerCase().contains(query);
+          }
+          return false;
+        });
+      }).toList();
+      _totalPages = (_filteredItems.length / _itemsPerPage).ceil();
+      _currentPage = 1;
+      _selectedRows = List<bool>.filled(_filteredItems.length, false);
+    });
+  }
+
+  void _changePage(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+  }
+
+  void _updateItemsPerPage(int? newItemsPerPage) {
+    if (newItemsPerPage != null) {
+      setState(() {
+        _itemsPerPage = newItemsPerPage;
+        _totalPages = (_filteredItems.length / _itemsPerPage).ceil();
+        _currentPage = 1;
+      });
+    }
+  }
+
+  void _toggleSelectAll(bool? value) {
+    setState(() {
+      _selectAll = value ?? false;
+      _selectedRows = List<bool>.filled(_filteredItems.length, _selectAll);
+    });
+  }
+
+  void _toggleRowSelection(int index) {
+    setState(() {
+      _selectedRows[index] = !_selectedRows[index];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  _currentViewType == ViewType.table
+                      ? Icons.list
+                      : Icons.table_chart,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _currentViewType = _currentViewType == ViewType.table
+                        ? ViewType.list
+                        : ViewType.table;
+                  });
+                },
+              ),
+              if (widget.needSearchBar)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      onChanged: _filterItems,
+                      decoration: const InputDecoration(
+                        hintText: 'Search...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+              if (widget.needPerPageSelector)
+                DropdownButton<int>(
+                  value: _itemsPerPage,
+                  onChanged: _updateItemsPerPage,
+                  items: [5, 10, 20, 50].map((value) {
+                    return DropdownMenuItem(
+                      value: value,
+                      child: Text('$value per page'),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+          Expanded(
+            child: _currentViewType == ViewType.table
+                ? _buildTable()
+                : _buildList(),
+          ),
+          if (widget.needPagination)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Page $_currentPage of $_totalPages'),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: () {
+                          if (_currentPage > 1) {
+                            _changePage(_currentPage - 1);
+                          }
+                        },
+                      ),
+                      Container(
+                        width: 200,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(_totalPages, (index) {
+                              return IconButton(
+                                icon: Text('${index + 1}'),
+                                onPressed: () => _changePage(index + 1),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: () {
+                          if (_currentPage < _totalPages) {
+                            _changePage(_currentPage + 1);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTable() {
+    final startIndex =
+        (_itemsPerPage * (_currentPage - 1)).clamp(0, _filteredItems.length);
+    final endIndex =
+        (startIndex + _itemsPerPage).clamp(0, _filteredItems.length);
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_filteredItems.isEmpty) {
+      return const Center(child: Text('No data found'));
+    }
+
+    final List<String> allColumns = _filteredItems.first.keys.toList();
+    final List<String> columns = allColumns
+        .where((column) =>
+            widget.allowedColumns.isEmpty ||
+            widget.allowedColumns.contains(column))
+        .toList();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: [
+          DataColumn(
+            label: selectionType == SelectionType.multi
+                ? Checkbox(
+                    value: _selectAll,
+                    onChanged: _toggleSelectAll,
+                  )
+                : const SizedBox(),
+          ),
+          ...columns
+              .map((column) => DataColumn(label: Text(column.toUpperCase()))),
+          const DataColumn(label: Text('Actions')),
+        ],
+        rows: _filteredItems
+            .sublist(startIndex, endIndex)
+            .asMap()
+            .map((index, item) {
+              int rowIndex = startIndex + index;
+              return MapEntry(
+                index,
+                DataRow(
+                  cells: [
+                    if (selectionType == SelectionType.multi)
+                      DataCell(
+                        Checkbox(
+                          value: _selectedRows[rowIndex],
+                          onChanged: (value) {
+                            if (value != null) {
+                              _toggleRowSelection(rowIndex);
+                            }
+                          },
+                        ),
+                      )
+                    else
+                      DataCell(
+                        Icon(
+                          _selectedRows[rowIndex]
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                        ),
+                      ),
+                    ...columns.map((key) => DataCell(
+                          Text(item[key]?.toString() ?? '-'),
+                        )),
+                    DataCell(
+                      DropdownButton<String>(
+                        onChanged: (value) {},
+                        items: widget.actions.isNotEmpty
+                            ? widget.actions.map<DropdownMenuItem<String>>((e) {
+                                return DropdownMenuItem<String>(
+                                  value: e.toString(),
+                                  child: Text(e.toString()),
+                                );
+                              }).toList()
+                            : [],
+                        hint: const Text('Actions'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            })
+            .values
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_filteredItems.isEmpty) {
+      return const Center(child: Text('No data found'));
+    }
+    final List<String> allColumns = _filteredItems.first.keys.toList();
+    final List<String> columns = allColumns
+        .where((column) =>
+            widget.allowedColumns.isEmpty ||
+            widget.allowedColumns.contains(column))
+        .toList();
+
+    final startIndex =
+        (_itemsPerPage * (_currentPage - 1)).clamp(0, _filteredItems.length);
+    final endIndex =
+        (startIndex + _itemsPerPage).clamp(0, _filteredItems.length);
+
+    final currentItems = _filteredItems.sublist(startIndex, endIndex);
+
+    return ListView.builder(
+      itemCount: currentItems.length,
+      itemBuilder: (context, index) {
+        final item = currentItems[index];
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (selectionType == SelectionType.multi)
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Checkbox(
+                        value: _selectedRows[startIndex + index],
+                        onChanged: (value) {
+                          if (value != null) {
+                            _toggleRowSelection(startIndex + index);
+                          }
+                        },
+                      ),
+                    ),
+                  ...columns.map((key) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            key.toUpperCase(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(item[key]?.toString() ?? '-'),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showConfirmationDialog(String actionText, Map<String, dynamic> data) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Do you want to $actionText?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Continue'),
+              onPressed: () {
+                // Navigator.push(
+                //     context,
+                //     MaterialPageRoute(
+                //         builder: (context) => Approval(data: data)));
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

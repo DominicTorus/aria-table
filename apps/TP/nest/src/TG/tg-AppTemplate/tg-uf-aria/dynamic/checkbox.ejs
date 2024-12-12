@@ -1,0 +1,42 @@
+import TorusCheckBox from '@/app/torusComponents/torusCheckbox'
+import React,{ useEffect, useState } from 'react'
+
+const CheckBox<%= data.label %> = ({setUser}:any) => {
+
+  const[selectedValue ,setSelectedValue]=useState([])
+  useEffect(() => {
+    setUser((prev:any)=>({...prev,<%= data.label %>:selectedValue}))
+  }, [selectedValue])
+
+  return (
+    <%_ let height = (relation.height/data2.height)*100  _%>  
+    <%_ let width = (relation.width/data2.width)*100  _%>
+    <%_ let left = (relation.position.x/data2.width)*100 _%>
+    <%_ let top =(relation.position.y/data2.height)*100  _%>
+    <%_ let mdHeight = height - (height*0.1)  _%>  
+    <%_ let mdWidth = width - (width*0.1)  _%>
+    <%_ let mdLeft = left - (left*0.1)  _%>
+    <%_ let mdTop = top - (top*0.1)  _%>
+    <%_ let smHeight = mdHeight - (mdHeight*0.1)  _%>  
+    <%_ let smWidth = mdWidth - (mdWidth*0.1)  _%>
+    <%_ let smLeft = mdLeft - (mdLeft*0.1)  _%>
+    <%_ let smTop = mdTop - (mdTop*0.1)  _%>
+    <%_ let xlHeight = height + (height*0.1)  _%>  
+    <%_ let xlWidth = width + (width*0.1)  _%>
+    <%_ let xlLeft = left + (left*0.1)  _%>
+    <%_ let xlTop = top + (top*0.1)  _%>
+    <div className="container">
+    <div className="absolute left-[<%= left %>%] top-[<%= top %>%] h-[<%= height %>%] w-[<%= width %>%]   
+      sm:left-[<%= smLeft %>%] sm:top-[<%= smTop %>%] sm:h-[<%= smHeight %>%] sm:w-[<%= smWidth %>%] 
+      md:left-[<%= mdLeft %>%] md:top-[<%= mdTop %>%] md:h-[<%= mdHeight %>%] md:w-[<%= mdWidth %>%] 
+      xl:left-[<%= xlLeft %>%] xl:top-[<%= xlTop %>%] xl:h-[<%= xlHeight %>%] xl:w-[<%= xlWidth %>%]">
+    <TorusCheckBox type='group' value={selectedValue} onChange={setSelectedValue} label={'<%= data.label %>'} content={[<%_ for (let i = 0; i < data.props.length; i++) { _%>
+        <%_ if (data.props[i].name === 'content') { _%>
+            <%_ let content = data.props[i].value.split(','); _%>
+            <%_ for(let j =0;j<content.length;j++){ _%>'<%=content[j]%>'<%= content.length-1===j?'':',' %><%_ }}} _%>]} ></TorusCheckBox>
+  </div>  
+</div>
+  )
+}
+
+export default CheckBox<%= data.label %>

@@ -1,0 +1,295 @@
+import 'package:flutter/material.dart';
+import './exports.dart';
+
+<%_ function generateClassName(str) { return str.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(''); 
+} _%>
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+   runApp(
+    ChangeNotifierProvider(
+      create: (context) => DataModel(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  String currentTheme = 'my_theme';
+  int currentPageIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    return GluestackProvider(
+      gluestackTokenConfig: GluestackTokenConfig(
+        gsThemeToken: myTheme,
+        gsColorsToken: const GSColorsToken(
+          primary0: Color.fromARGB(255, 0, 0, 0),
+          primary100: Colors.blue,
+          primary700: Colors.white,
+        ),
+        gsFontFamilyToken: const GSFontFamilyToken(
+          $body: 'Roboto',
+          $heading: 'Roboto',
+        ),
+        gsFontSizeToken: const GSFontSizeToken(
+          $2xs: 8.0,
+          $xs: 10.0,
+          $sm: 12,
+          $md: 16,
+          $lg: 18.0,
+          $xl: 20.0,
+          $2xl: 24.0,
+          $3xl: 30.0,
+          $4xl: 36.0,
+          $5xl: 48.0,
+          $6xl: 60.0,
+          $7xl: 72.0,
+          $8xl: 96.0,
+          $9xl: 128.0,
+        ),
+        gsFontWeightsToken: const GSFontWeightsToken(
+          hairline: FontWeight.w100,
+          thin: FontWeight.w200,
+          light: FontWeight.w300,
+          normal: FontWeight.w400,
+          medium: FontWeight.w500,
+          semibold: FontWeight.w600,
+          bold: FontWeight.w700,
+          extrabold: FontWeight.w800,
+          black: FontWeight.w900,
+        ),
+      ),
+      child: ToastificationWrapper( 
+          child: GSApp(
+          theme: GSThemeData.fromTheme('my_theme'),
+          debugShowCheckedModeBanner: false, 
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const TenantLogin(),
+            <%_ if(data.length > 0) { _%>
+              <%_ data.forEach((e) => { _%>
+                '/<%= e %>': (context) => const  <%= generateClassName(e) %>(),
+                <%_  }) _%>
+            <%_ } _%>
+          },
+          home: const TenantLogin(),
+        ),
+      ),
+    );
+  }
+}
+
+class AppRoutes extends StatefulWidget {
+  const AppRoutes({super.key});
+
+  @override
+  State<AppRoutes> createState() => _AppRoutesState();
+}
+
+class _AppRoutesState extends State<AppRoutes> {
+  int currentPageIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      <%_ if(!data1) { _%>
+        <%_ if(data.length > 1) { _%>
+        bottomNavigationBar: NavigationBar(
+          onDestinationSelected: (int index) {
+            setState(() {
+              currentPageIndex = index;
+            });
+          },
+          indicatorColor: const Color.fromARGB(255, 175, 219, 255),
+          selectedIndex: currentPageIndex,
+          destinations: const <Widget>[
+              <%_ data.forEach((e, index) => { _%>
+                NavigationDestination(
+                  icon: Icon(Icons.home),
+                  label: '<%= e.replace(/([a-z])([A-Z])/g, '$1 $2') %>',
+                ),
+              <%_  }) _%>
+          ],
+        ),
+        <%_ } _%>
+      <%_ } _%>
+      <%_ if(data1) { _%>
+        <%_ if(data.length > 1) { _%>
+          drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+             const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text('Torus Flutter'),
+              ),
+            <%_ data.forEach((e, index)=> { _%>
+             <%_ if(index != 2){_%>
+              ListTile(
+                title: const Text('<%= e %>'),
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => <%= generateClassName(e) %>(),
+                  ));
+                },
+              ),
+              <%_ } _%>
+              <%_ }) _%>
+            ],
+          ),
+        ),
+        <%_ } _%>
+      <%_ } _%>
+      body: <Widget>[
+        <%_ if(data.length > 0) { _%>
+          <%_ data.forEach((e) => { _%>
+            const <%= generateClassName(e) %>(),
+            <%_  }) _%>
+        <%_ } _%>
+      ][currentPageIndex],
+    );
+  }
+}
+
+const myTheme = {
+  "my_theme": {
+    "colors": {
+      "primary0": Color(0xFFB2EBF2),
+      "primary50": Color(0xFF80DEEA),
+      "primary100": Colors.blue,
+      "primary200": Colors.blue,
+      "primary300": Colors.blue,
+      "primary400": Colors.blue,
+      "primary500": Colors.blue,
+      "primary600": Colors.blue,
+      "primary700": Colors.blue,
+      "primary800": Colors.blue,
+      "primary900": Colors.blue,
+      "primary950": Colors.blue,
+      "secondary0": Color(0xFFB2EBF2),
+      "secondary50": Color(0xFF80DEEA),
+      "secondary100": Color(0xFF4DD0E1),
+      "secondary200": Color(0xFF26C6DA),
+      "secondary300": Color(0xFF00BCD4),
+      "secondary400": Color(0xFF00ACC1),
+      "secondary500": Color(0xFF0097A7),
+      "secondary600": Color(0xFF00838F),
+      "secondary700": Color(0xFF006064),
+      "secondary800": Color(0xFF004D40),
+      "secondary900": Color(0xFF00332A),
+      "secondary950": Color(0xFF00251A),
+      "tertiary0": Color(0xFF543112),
+      "tertiary50": Color(0xFF6C3D13),
+      "tertiary100": Color(0xFF824917),
+      "tertiary200": Color(0xFFB4621A),
+      "tertiary300": Color(0xFFD7751F),
+      "tertiary400": Color(0xFFE78128),
+      "tertiary500": Color(0xFFFB9D4B),
+      "tertiary600": Color(0xFFFDB474),
+      "tertiary700": Color(0xFFFED1AA),
+      "tertiary800": Color(0xFFFFE9D5),
+      "tertiary900": Color(0xFFFFF2E5),
+      "tertiary950": Color(0xFFFFFAF5),
+      "text0": Color.fromARGB(0, 0, 0, 0),
+      "text50": Color.fromARGB(0, 0, 0, 0),
+      "text100": Color.fromARGB(0, 0, 0, 0),
+      "text200": Color.fromARGB(0, 0, 0, 0),
+      "text300": Color.fromARGB(0, 0, 0, 0),
+      "text400": Color.fromARGB(0, 0, 0, 0),
+      "text500": Color.fromARGB(0, 0, 0, 0),
+      "text600": Color.fromARGB(0, 0, 0, 0),
+      "text700": Color.fromARGB(0, 0, 0, 0),
+      "text800": Color.fromARGB(0, 0, 0, 0),
+      "text900": Color.fromARGB(0, 0, 0, 0),
+      "text950": Color.fromARGB(0, 0, 0, 0),
+      "background0": Color(0xFFE0FFFF),
+      "background50": Color(0xFF272625),
+      "background100": Color(0xFF414040),
+      "background200": Color(0xFF535252),
+      "background300": Color(0xFF747474),
+      "background400": Color(0xFF8E8E8E),
+      "background500": Color(0xFFA2A3A3),
+      "background600": Color(0xFFD5D4D4),
+      "background700": Color(0xFFDCDBEB),
+      "background800": Color(0xFFF2F1F1),
+      "background900": Color(0xFFF6F6F6),
+      "background950": Color(0xFFFEFEFE),
+      "border0": Color(0xFF1A1717),
+      "border50": Color(0xFF272624),
+      "border100": Color(0xFF414141),
+      "border200": Color(0xFF535252),
+      "border300": Color(0xFF737474),
+      "border400": Color(0xFF8C8D8D),
+      "border500": Color(0xFFA5A3A3),
+      "border600": Color(0xFFD3D3D3),
+      "border700": Color(0xFFDDDCDB),
+      "border800": Color(0xFFE6E6E6),
+      "border900": Color(0xFFF3F3F3),
+      "border950": Color(0xFFFDFEFE),
+      "success0": Color(0xFF1B3224),
+      "success50": Color(0xFF14532D),
+      "success100": Color(0xFF166534),
+      "success200": Color(0xFF206F3E),
+      "success300": Color(0xFF2A7948),
+      "success400": Color(0xFF348352),
+      "success500": Color(0xFF489766),
+      "success600": Color(0xFF66B584),
+      "success700": Color(0xFF84D3A2),
+      "success800": Color(0xFFA2F1C0),
+      "success900": Color(0xFFCAFFE8),
+      "success950": Color(0xFFE4FFF4),
+      "error0": Color(0xFF531313),
+      "error50": Color(0xFF7F1D1D),
+      "error100": Color(0xFF991B1B),
+      "error200": Color(0xFFB91C1C),
+      "error300": Color(0xFFDC2626),
+      "error400": Color(0xFFE63535),
+      "error500": Color(0xFFEF4444),
+      "error600": Color(0xFFF87171),
+      "error700": Color(0xFFE63534),
+      "error800": Color(0xFFFECACA),
+      "error900": Color(0xFFFEE2E2),
+      "error950": Color(0xFFFEE9E9),
+      "warning0": Color(0xFF542D12),
+      "warning50": Color(0xFF6C3813),
+      "warning100": Color(0xFF824417),
+      "warning200": Color(0xFFB45A1A),
+      "warning300": Color(0xFFD76C1F),
+      "warning400": Color(0xFFE77828),
+      "warning500": Color(0xFFFB954B),
+      "warning600": Color(0xFFFDAD74),
+      "warning700": Color(0xFFFECDAA),
+      "warning800": Color(0xFFFFE7D5),
+      "warning900": Color(0xFFFFF9F5),
+      "warning950": Color(0xFFFFFDFB),
+      "info0": Color(0xFF032638),
+      "info50": Color(0xFF05405D),
+      "info100": Color(0xFF075A83),
+      "info200": Color(0xFF0973A8),
+      "info300": Color(0xFF0B8DCD),
+      "info400": Color(0xFF0DA6F2),
+      "info500": Color(0xFF32B4F4),
+      "info600": Color(0xFF57C2F6),
+      "info700": Color(0xFF7CCFF8),
+      "info800": Color(0xFFA2DDFA),
+      "info900": Color(0xFFC7EBFC),
+      "info950": Color(0xFFECF8FE),
+      "backgroundError": Color(0xFF422B2B),
+      "backgroundWarning": Color(0xFF412F23),
+      "backgroundSuccess": Color(0xFF1C2B21),
+      "backgroundMuted": Color(0xFF252526),
+      "backgroundInfo": Color(0xFF1A282E),
+    }
+  }
+};

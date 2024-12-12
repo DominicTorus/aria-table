@@ -1,0 +1,79 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete,UseGuards,Query,Req} from '@nestjs/common';
+import { codeDescriptionService } from './codeDescription.service';
+import { Prisma } from '@prisma/client';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { codeDescriptionEntity } from './entity/codeDescription.entity';
+import { AbilitiesGuard } from 'src/ability/ability.guard';
+import { CheckAbilities } from 'src/ability/ability.decorator';
+
+ 
+@Controller('codeDescription')
+@ApiTags('codeDescription')
+export class codeDescriptionController {
+  constructor(private readonly codeDescriptionService: codeDescriptionService) {}
+
+  @Get("/schema")
+  @ApiOkResponse({ type: codeDescriptionEntity })
+  findSchema(@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.findSchema(token);
+  }
+
+  @Get('/get')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity, isArray: true })
+  findAllmethod(@Query() query: any,@Body() body: any) {
+    const { limit }:{ limit:number } = query;
+    const { selectColumns}:{ selectColumns:any } = body;
+    return this.codeDescriptionService.findAllmethod(query, +limit,selectColumns);
+  }
+
+  @Get(':ccdId ')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity })
+  findOne(@Param('ccdId ') ccdId :number,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.findOne(+ccdId ,token);
+  }
+ 
+  @Get()
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity, isArray: true })
+  findAll(@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.findAll(token);
+  }
+ 
+  @Post()
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Post', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity })
+  create(@Body() createcodeDescriptionDto: Prisma.codeDescriptionCreateInput,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.create(createcodeDescriptionDto,token);
+  }
+ 
+  @Patch(':ccdId')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Update', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity })
+  update(@Param('ccdId') ccdId:number,
+    @Body() updatecodeDescriptionDto: Prisma.codeDescriptionUpdateInput,
+    @Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.update(+ccdId, updatecodeDescriptionDto,token);
+  }
+ 
+  @Delete(':ccdId')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Delete', subject: "codeDescription"})
+  @ApiOkResponse({ type: codeDescriptionEntity })
+  remove(@Param('ccdId') ccdId:number,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.codeDescriptionService.remove(+ccdId,token);
+  }  
+ 
+}

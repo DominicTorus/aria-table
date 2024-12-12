@@ -1,0 +1,53 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %><T> extends StatefulWidget {
+  final T groupValue;
+  final ValueChanged<T> onChanged;
+  final List<RadioItem<T>> items;
+
+  const <%= relation[0] %>({
+    super.key,
+    required this.groupValue,
+    required this.onChanged,
+    required this.items,
+  });
+
+  @override
+  State<<%= relation[0] %><T>> createState() => _<%= relation[0] %>State<T>();
+}
+
+class _<%= relation[0] %>State<T> extends State<<%= relation[0] %><T>> {
+  @override
+  Widget build(BuildContext context) {
+    return GSVStack(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widget.items.map((item) {
+        return _buildRadioButton(item.value, item.label);
+      }).toList(),
+    );
+  }
+
+  GSRadio<T> _buildRadioButton(T value, String label) {
+    return GSRadio<T>(
+      value: value,
+      groupValue: widget.groupValue,
+      onChanged: (newValue) {
+        if (newValue != null) {
+          widget.onChanged(newValue);
+        }
+      },
+      icon: GSRadioIcon<T>(),
+      label: GSRadioText<T>(text: label),
+      style: GSStyle(margin: EdgeInsets.only(right: $GSSpace.$2)),
+    );
+  }
+}
+
+class RadioItem<T> {
+  final T value;
+  final String label;
+
+  RadioItem({required this.value, required this.label});
+}

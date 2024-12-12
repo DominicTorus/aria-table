@@ -1,0 +1,55 @@
+<%_ let appName = data.toLowerCase() _%>
+<%_ let appNameinPascal = data _%>
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <%= appName %>-df-generator
+  namespace: <%= appName %>-df
+  labels:
+    app: <%= appName %>-df-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <%= appName %>-df-generator
+  template:
+    metadata:
+      labels:
+        app: <%= appName %>-df-generator
+    spec:
+      containers:
+      - name: <%= appName %>-df-generator-backend-container
+        image: 192.168.2.164:5000/torus9x-<%= appName %>-df:docker_tag
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3010    # Aligning with Service targetPort
+        env:
+        - name: redis_host
+          value: "192.168.2.165"
+        - name: redis_port
+          value: "8086"
+       
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <%= appName %>-df-generator
+  namespace: <%= appName %>-df
+  labels:
+    app: <%= appName %>-df-generator
+spec:
+  selector:
+    app: <%= appName %>-df-generator
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3010
+     # nodePort: 32002
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 3010
+  type: ClusterIP

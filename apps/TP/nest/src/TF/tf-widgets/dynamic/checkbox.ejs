@@ -1,0 +1,78 @@
+
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final String value;
+  final GSCheckBoxSizes size;
+  final bool isDisabled;
+  final bool isInvalid;
+  final Color? color;
+  final Color? bg;
+
+  const <%= relation[0] %>({
+    super.key,
+    this.value = '',
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "size") { _%>
+          this.size = GSInputSizes.$<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isDisabled") { _%>
+          this.isDisabled = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isInvalid") { _%>
+          this.isInvalid = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "color") { _%>
+          this.color = <%_ if(prop.value) {_%> '<%= prop.value %>'
+          <%_ }, _%>,
+        <%_ } _%>
+        <%_ if (propName === "bg") { _%>
+          this.bg =<%_ if(prop.value) {_%> '<%= prop.value %>'
+          <%_ }, _%>,
+        <%_ } _%>
+    <%_ }); _%>
+    <%_ } _%>
+  });
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  @override
+  Widget build(BuildContext context) {
+    return GSCheckBox(
+      value: widget.value,
+      onChanged: (val) {
+        if (widget.onChanged != null) {
+          widget.onChanged!(val);
+        }
+      },
+      label: GSCheckBoxLabel(text: widget.value),
+      size: widget.size,
+      isDisabled: widget.isDisabled,
+      isInvalid: widget.isInvalid,
+      icon: GSCheckBoxIndicator(
+        style: GSStyle(
+          iconColor: widget.color,
+          margin: EdgeInsets.only(
+            right: $GSSpace.$2,
+          ),
+        ),
+        child: const GSCheckBoxIcon(),
+      ),
+    );
+  }
+}

@@ -1,0 +1,35 @@
+<%_ let componentNames = data  %>
+"use client"
+import React from 'react'
+
+export interface TotalContextProps {
+    <%_ for (let i = 0; i < componentNames.length; i++) { _%>
+    <%= componentNames[i].name  %>: any 
+    set<%= componentNames[i].name  %>: React.Dispatch<React.SetStateAction<any>>
+    <%_ } _%>
+     
+    searchParam: string,
+    setSearchParam: React.Dispatch<React.SetStateAction<string>>
+}
+
+export const TotalContext = React.createContext<TotalContextProps | {}>({})
+
+const GlobalContext = ({children} : {children: React.ReactNode}) => {
+  <%_ for (let i = 0; i < componentNames.length; i++) { _%>
+    <% if (componentNames[i].type=='table') { %>
+    const [<%= componentNames[i].name  %>, set<%= componentNames[i].name  %> ] = React.useState<any[]>([]) 
+      <%_ }else { _%>
+    const [<%= componentNames[i].name  %>, set<%= componentNames[i].name  %> ] = React.useState<any>({}) 
+        <%_ } _%>
+  <%_ } _%>
+    const [searchParam , setSearchParam] = React.useState<string>("")
+
+
+  return (
+    <TotalContext.Provider value={{<%_ for (let i = 0; i < componentNames.length; i++) { _%> <%= componentNames[i].name  %>, set<%= componentNames[i].name  %>, <%_ } _%>searchParam , setSearchParam}}>
+      {children}
+    </TotalContext.Provider>
+  )
+}
+
+export default GlobalContext

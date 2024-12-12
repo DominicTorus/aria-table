@@ -1,0 +1,337 @@
+<%_ let formData = []; _%>
+<%_ let rows = {}; _%>
+<%_ let groupedRows; _%>
+<%_ let groupedWidgets = {}; _%>
+<%_ let row; _%>
+<%_ let order; _%>
+<%_ let field; _%>
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let lastIndex = 0; _%>
+<%_ let fab; _%>
+<%_ function generateClassName(str) { return str.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(''); 
+} 
+ function toJsonKeyFormat(inputString) {
+  return inputString
+    .split(' ') 
+    .map((word, index) => {
+      if (index === 0) {
+        return word.toLowerCase(); 
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join('').toLowerCase(); 
+}
+_%>
+import 'package:flutter/material.dart';
+import '../../exports.dart';
+
+class <%= generateClassName(data['name']) %> extends StatefulWidget {
+  final List<dynamic>? data;
+  final VoidCallback? callback;
+  const <%= generateClassName(data['name']) %>({super.key, this.data, this.callback});
+
+  @override
+  State<<%= generateClassName(data['name']) %>> createState() => _<%= generateClassName(data['name']) %>State();
+}
+<%_ 
+    if (data.ufs.toString()) {
+        const groupedWidgets = {};
+
+        data.ufs.forEach((item) => {
+            let field;
+            order = 0;
+            if(item.type === 'group'){
+                if (!groupedWidgets[item['id']]) {
+                    groupedWidgets[item['id']] = [];
+                }
+                
+                if (item.groupType === 'table') {
+                    field = `${generateClassName(data.name + item.label)}(),`;
+                    groupedWidgets[item['id']].push({
+                      field: field,
+                      order: 0,
+                      alignment: 'center',
+                      length: 12
+                    });
+                }
+                if (item.groupType === 'list') {
+                    field = `${generateClassName(data.name + item.label)}(),`;
+                    groupedWidgets[item['id']].push({
+                      field: field,
+                      order: 0,
+                      alignment: 'center',
+                      length: 12
+                    });
+                }
+            } else {
+                switch (item.type.toString()) {
+                    case 'button':
+                        field = `${generateClassName(data.name + item.label)}(formData: formData, callback: clearFormFields,),`;
+                        break;
+                    case 'textinput':
+                        field = `${generateClassName(data.name + item.label)}(controller: ${toJsonKeyFormat(item.label)}, onChanged: (_) => updateFormData()),`;
+                        formData.push({'type': 'textinput', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'checkbox':
+                        field = `${generateClassName(data.name + item.label)}(),`;
+                        formData.push({'type': 'checkbox', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'textarea':
+                        field = `${generateClassName(data.name + item.label)}(),`;
+                        formData.push({'type': 'textarea', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'dropdown':
+                        field = `${generateClassName(data.name + item.label)}( onChanged: (value) { setState(() { ${toJsonKeyFormat(item.label)} = value; updateFormData();});},),`;
+                        formData.push({'type': 'dropdown', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'avatar':
+                        field = `${generateClassName(data.name + item.label)}(),`;
+                        break;
+                    case 'datepicker':
+                        field = `${generateClassName(data.name + item.label)}(onChanged: (date) => { setState(() { ${toJsonKeyFormat(item.label)} = date; updateFormData();})},),`;
+                        formData.push({'type': 'datepicker', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'timepicker':
+                        field = `${generateClassName(data.name + item.label)}(),`;
+                        formData.push({'type': 'timepicker', 'label': toJsonKeyFormat(item.label)});
+                        break;
+                    case 'text':
+                        field = `${generateClassName(data.name + item.label)}(),`;
+                        break;
+                    case 'fab':
+                        fab = `${generateClassName(data.name + item.label)}(),`;
+                        break;
+                    default:
+                        field = `SizedBox()`;
+                        break;
+                }
+
+                if (item.grid.hasOwnProperty('row') && item.type.toLowerCase() != 'appbar' && item.type.toLowerCase() != 'column') {
+                    let length;
+                    let alignment;
+                    if (item.elementInfo.hasOwnProperty('layout')) {
+                        for (let layout of item['elementInfo']['layout']) {
+                            if (layout['name'] === "length") {
+                                length = layout['default'];
+                            }
+                            if (layout['name'] === "length") {
+                                length = layout['value'];
+                            }
+                            if (layout['name'] === 'alignment' && layout['enum']['selectedValue']) {
+                                switch (layout['enum']['selectedValue'].toString()) {
+                                    case 'topLeft': alignment = 'topLeft'; break;
+                                    case 'topCenter': alignment = 'topCenter'; break;
+                                    case 'topRight': alignment = 'topRight'; break;
+                                    case 'centerLeft': alignment = 'centerLeft'; break;
+                                    case 'center': alignment = 'center'; break;
+                                    case 'centerRight': alignment = 'centerRight'; break;
+                                    case 'bottomLeft': alignment = 'bottomLeft'; break;
+                                    case 'bottomCenter': alignment = 'bottomCenter'; break;
+                                    case 'bottomRight': alignment = 'bottomRight'; break;
+                                    default: alignment = 'center';
+                                }
+                            }
+                        }
+                    }
+
+                    order = parseInt(item.grid.row.start);
+                    if (!groupedWidgets[item.T_parentId]) {
+                        groupedWidgets[item.T_parentId] = [];
+                    }
+
+                    groupedWidgets[item.T_parentId].push({
+                        field: field,
+                        order: order,
+                        alignment: alignment,
+                        length: isNaN(parseInt(length)) ? 12 : parseInt(length),
+                    });
+                }
+            }
+        });
+
+        for (const groupId in groupedWidgets) {
+            if (groupedWidgets.hasOwnProperty(groupId)) {
+                groupedWidgets[groupId].sort((a, b) => a.order - b.order);
+            }
+        }
+
+        groupedRows = Object.keys(groupedWidgets).map((groupId) => {
+            const rows = [];
+            let currentRow = [];
+            let currentOrder = null;
+
+            groupedWidgets[groupId].forEach((widget) => {
+                if (widget.order === currentOrder) {
+                    currentRow.push(widget);
+                } else {
+                    if (currentRow.length > 0) {
+                        rows.push(currentRow);
+                    }
+                    currentRow = [widget];
+                    currentOrder = widget.order;
+                }
+            });
+
+
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
+
+            return `const SizedBox(height: 20),
+            GSBox(
+              child: Column(
+                  children: [ ${rows.map(row => {
+            return `Row(
+                      children: [${row.map(group => {
+                  return `Flexible(
+                            flex: ${group.length},
+                            child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Align(
+                                    alignment: Alignment.${group.alignment || 'center'},
+                                    child: ${group.field}
+                                ),
+                            ),
+                          )`;}).join(',')}
+                      ],
+                    )`;}).join(',')}
+                  ],
+                ),
+            ),`;
+        });
+    }
+_%>
+
+class _<%= generateClassName(data['name']) %>State extends State<<%= generateClassName(data['name']) %>> {
+<%_ if(formData){ _%>
+  Map<String, dynamic> formData = {};
+   <%_ formData.map((e) => { _%>
+    <%_ if(e.type == 'textinput'){ _%>
+  final TextEditingController <%= e.label %> = TextEditingController();
+    <%_ } _%>
+    <%_ if(e.type == 'textarea' ){ _%>
+  final TextEditingController <%= e.label %> = TextEditingController();
+    <%_ } _%>
+    <%_ if(e.type == 'datepicker' ){ _%>
+  DateTime? <%= e.label %>;
+    <%_ } _%>
+    <%_ if(e.type == 'dropdown' ){ _%>
+  String? <%= e.label %>;
+    <%_ } _%>
+  <%_  }) _%>
+<%_ } _%>
+
+  @override
+  void initState(){
+    super.initState();
+  }
+
+  void updateFormData() {
+    setState(() {
+      formData = {
+      <%_ formData.map((e) => { _%>
+        <%_ if(e.type =='textinput' ){ _%>
+        '<%= e.label %>': UtilsServices.parseAsInt(<%= e.label %>.text),
+        <%_ } _%> 
+        <%_ if(e.type == 'textarea' ){ _%>
+        '<%= e.label %>': UtilsServices.parseAsInt(<%= e.label %>.text),
+        <%_ } _%> 
+        <%_ if(e.type == 'datepicker' ){ _%>
+        '<%= e.label %>': UtilsServices.convertToUTC(<%= e.label %>.toString()),
+        <%_ } _%> 
+        <%_ if(e.type == 'dropdown' ){ _%>
+        '<%= e.label %>': <%= e.label %>.toString(),
+        <%_ } _%>  
+      <%_  }) _%>
+      };
+    });
+  }
+
+  void clearFormFields() {
+    setState(() {
+      <%_ formData.map((e) => { _%>
+        <%_ if(e.type =='textinput'){ _%>
+          <%= e.label %>.text = '';
+        <%_ } _%> 
+        <%_ if(e.type == 'textarea' ){ _%>
+          <%= e.label %>.text = '';
+        <%_ } _%> 
+        <%_ if(e.type == 'datepicker' ){ _%>
+          <%= e.label %> = null;
+        <%_ } _%>  
+        <%_ if(e.type == 'dropdown' ){ _%>
+          <%= e.label %> = null;
+        <%_ } _%>
+      <%_  }) _%>
+      formData = {};
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    final Map<String, dynamic>? data = arguments is Map<String, dynamic> ? arguments : null;
+    if (data != null) {
+      setState(() {
+      <%_ formData.map((e) => { _%>
+        <%_ if(e.type == 'textinput' && e.label == 'empid' ){ _%>
+          <%= e.label %>.text = data['<%= e.label %>'] != null ? data['<%= e.label %>'].toString() : '';
+        <%_ } _%> 
+      <%_  }) _%>
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+
+  @override
+  Widget build(BuildContext context) {   
+    return Scaffold(
+      <%_ if(data.ufs.toString()){ _%>
+        <%_ data.ufs.forEach((e) => { _%>
+          <%_ if (e.type === 'appbar') { _%>
+      appBar: GAppBar(
+        title: '<%= e.label %>',
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.language),
+          ),
+          IconButton(
+            onPressed: () {
+              UserSecureStorage.delToken(UserSecureStorage.tokenKey.toString());
+              Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (context) => const TenantLogin(),
+              ));
+            },
+            icon: const Icon(Icons.logout),
+          )
+        ],
+      ),
+          <%_ } _%>
+        <%_ }) _%>
+      <%_ } _%>
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
+          children: <Widget>[
+            <%_ groupedRows.forEach(group=> { _%>
+            <%= group %>
+              <%_ }); _%>
+          ],
+        ),
+      ),
+      <%_ if(fab){ _%>
+      floatingActionButton: <%= fab %>
+      <%_ } _%>
+    );
+  }
+}

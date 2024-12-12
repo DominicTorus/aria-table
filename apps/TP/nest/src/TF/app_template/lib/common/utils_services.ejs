@@ -1,0 +1,38 @@
+class UtilsServices {
+  static dynamic parseAsInt(String input) {
+    var parsedValue = int.tryParse(input);
+
+    if (parsedValue != null) {
+      return parsedValue;
+    }
+
+    return input;
+  }
+
+  static String convertToUTC(String date) {
+    if (date != "null") {
+      DateTime inputDate = DateTime.parse(date);
+
+      String formattedDate = inputDate.toUtc().toIso8601String();
+
+      return formattedDate.toString();
+    } else {
+      return "";
+    }
+  }
+
+  static Map<String, dynamic> nullFilter(Map<String, dynamic> data) {
+    return data..removeWhere((key, value) => value == null || value == '');
+  }
+
+  static List<Map<String, dynamic>> nullListFilter(
+      List<Map<String, dynamic>> dataList) {
+    return dataList.map((data) {
+      Map<String, dynamic> filteredData = Map.from(data);
+
+      filteredData.removeWhere((key, value) => value == null || value == '');
+
+      return filteredData;
+    }).toList();
+  }
+}

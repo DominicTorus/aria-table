@@ -1,0 +1,276 @@
+<%_ let nodesElementInfo = data.elementInfo _%>
+<%_ let name = data.label _%>
+<%_ let nodes = data _%>
+<%_ let nodesAll = relation _%>
+<%_ let ufKey = data1[0].ufKey _%>
+<%_ let pfKey = data1[0].pfKey _%>
+<%_ let sfKey = data1[0].sfKey _%>
+<%_ let stateAndSetStatePre = data1[3] _%>
+<%_ let eventDetailsArray = data1[1] _%>
+<%_ let eventDetailsObj = data1[2] _%>
+<%_ let compDetailsID = data2.componentsId _%>
+<%_ let StateName=""_%>
+<%_ let SetStateName=""_%>
+<%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+  <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+    <%_ if (nodesAll[i].id === compDetailsID) { _%>
+      <%_ StateName=nodesAll[i].label + nodesAll[i].id.slice(-5) _%>
+      <%_ SetStateName="set"+nodesAll[i].label + nodesAll[i].id.slice(-5) _%>
+
+      <%_ } _%> 
+    <%_ } _%>  
+  <%_ } _%>
+import React, { useState,useContext,useEffect } from 'react'
+import { TotalContext, TotalContextProps } from '@/app/globalContext';
+<%_ if (nodesElementInfo.type === 'Dynamic-Api') { _%>
+import axios from "axios";
+<%_ } _%>
+import i18n from '@/app/components/i18n';
+<%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+  <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+import { ActionTooltip } from '@gravity-ui/uikit';
+  <%_ } _%>
+<%_ } _%>
+import { AxiosService } from "@/app/components/axiosService";
+import { getMapperDetailsDto } from "@/app/interfaces/interfaces";
+import { useInfoMsg } from "@/app/torusStaticHandlers/infoMsgHandler";
+import { Button, DropdownMenu, Select } from '@gravity-ui/uikit'
+
+
+const Dropdown<%=name %> = ({lockedData,setLockedData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData}: any) => {
+const keyset:any=i18n.keyset("language")
+<%_ for (let i = 0; i < nodesAll.length; i++) { _%>
+  <%_ if (nodesAll[i].id === nodesAll[i].T_parentId) { _%>
+    const {<%= nodesAll[i].label  %><%= nodesAll[i].id.slice(-5) %>, set<%= nodesAll[i].label %><%= nodesAll[i].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps
+    <%_ } _%>  
+  <%_ } _%>
+  
+let getMapperDetails:any;
+  <%_ if (nodesElementInfo.type.toLowerCase() === 'static') { _%>
+const [selectedItem, setSelectedItem] = useState('<%=name.toLowerCase() %>');
+  <%_ for (let i = 0; i < nodesElementInfo.props.length; i++) { _%>
+    <%_ if (nodesElementInfo.props[i].name === 'items') { _%>
+const items = [
+  <%_ for (let j = 0; j < nodesElementInfo.props[i].items.length; j++) { _%>
+    {
+    action: () => setSelectedItem('<%= nodesElementInfo.props[i].items[j].text  %>'),
+    key: '<%= nodesElementInfo.props[i].items[j].text  %>',
+    text: '<%= nodesElementInfo.props[i].items[j].text  %>'
+    },
+  <%_ } _%>
+  ];
+
+    <%_ } _%>
+  <%_ }  _%> 
+  useEffect(() => {
+    if (data?.<%=name.toLowerCase() %> == '') {
+      setSelectedItem('<%=name.toLowerCase() %>')
+    }
+  }, [data?.<%=name.toLowerCase() %>])
+  useEffect(() => {
+    if (!selectedItem.includes('<%=name.toLowerCase() %>'))
+    <%=SetStateName %>((prev: any) => ({ ...prev, <%=name.toLowerCase() %>: selectedItem }))
+  }, [selectedItem])
+  <%_ }else if(nodesElementInfo.type.toLowerCase() === 'dynamic'){ _%>
+  const toast=useInfoMsg()
+  let getMapperDetailsBody: getMapperDetailsDto;
+  const [<%=name %>Options, set<%=name %>Options] = useState<string[]>([]);
+  let category : string
+  <%_ for (let i = 0; i < nodesElementInfo.props.length; i++) { _%>
+  <%_ if(nodesElementInfo.props[i].name === "filterProps"){ _%>
+  category = "<%= nodesElementInfo.props[i].category %>";
+  <%_ } _%>
+  <%_ } _%>
+  const getDropdownData = async(value?:any)=>{
+    getMapperDetailsBody={
+      ufkey:"<%= ufKey %>",
+      componentId:"<%= compDetailsID %>",
+      controlId:"<%= nodes.id %>",
+      category:category,
+      <%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%>
+      <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'setFormData') { _%>
+      bindtranValue:value,
+      <%_ } _%>
+      <%_ if(eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'getFormData'){ _%>
+      code:dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %>,
+      <%_ } _%>
+      <%_ } _%>
+    }
+
+  try{
+    getMapperDetails =  await AxiosService.post("/UF/getMapperDetails",getMapperDetailsBody,{
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    }
+    )
+    if(getMapperDetails?.data?.error == true){
+      toast(getMapperDetails?.data?.errorDetails?.message, 'danger')
+      return
+    }
+    <%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'setFormData') { _%>
+      setDropdownData((prev: any) => ({ ...prev, <%= name.toUpperCase() %>: getMapperDetails?.data}))
+    <%_ } _%>
+    <%_ } _%>
+    <%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%><%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'getFormData') { _%>if(!dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %> && Array.isArray(dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %>)){
+      set<%=name %>Options(getMapperDetails.data);
+      let temp : any = dropdownData;
+      delete temp.<%= name.toUpperCase() %>
+      setDropdownData(temp)
+    }
+      <%_ } _%><%_ } _%>
+    if(!value){
+    set<%=name %>Options(getMapperDetails.data);
+    }
+    } catch (error) {
+      console.error("Error fetching mapper details for dropdown:", error);
+    }
+  }
+  useEffect(() => {
+    <%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%><%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'getFormData') { _%>
+      if(Array.isArray(dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %>)){
+        dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %> = undefined;
+      }
+      if (!dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %>) {
+        let temp: any = <%=StateName %>
+        delete temp.<%=name.toLowerCase() %>
+        <%=SetStateName %>(temp)
+      }
+      <%_ } _%><%_ } _%>
+    getDropdownData()
+  },[<%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%><%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'getFormData') { _%>dropdownData.<%= eventDetailsArray[i+1].name.toUpperCase() %><%_ } _%><%_ } _%>])
+  const handlechange = (value: any) => {
+    console.log("Selected value:", value);
+    if(value.length>0){
+    <%=SetStateName %>((prev: any) => ({ ...prev, <%=name.toLowerCase() %>: value[0] }))
+    <%_ for (let i = 2; i < eventDetailsArray.length; i++) { _%>
+    <%_ if (eventDetailsArray[i].type === 'handlerNode' && eventDetailsArray[i].name === 'setFormData') { _%>
+    getDropdownData(value[0])
+    <%_ } _%>
+    <%_ } _%>
+    }else{
+      let temp:any = <%= StateName %>
+      delete temp.<%=name.toLowerCase() %>
+      <%=SetStateName %>(temp)
+    getDropdownData()
+    }
+  };
+  <%_ }else if (nodesElementInfo.type === 'Dynamic-Api') { _%>
+    const [selectedItem, setSelectedItem] = useState('<%=name.toLowerCase() %>');
+  <%_ for (let i = 0; i < dnodesElementInfoata.props.length; i++) { _%>
+  <%_ if (nodesElementInfo.props[i].name === 'items') { _%>
+const [items, setItems] = useState<{ action: () => void; key: string; text: string }[]>([])
+
+const fetch<%=name %> = async () => {
+  try {
+    const response = await axios.get('<%= nodesElementInfo.props[i].url  %>');
+    const <%=name %>Data = response.data.map((<%=name.toLowerCase() %>:any) => ({
+      action: () => setSelectedItem(<%= nodesElementInfo.props[i].code  %>),
+      key: <%= nodesElementInfo.props[i].code  %>, 
+      text: <%= nodesElementInfo.props[i].description  %>
+    }));
+    setItems(<%=name %>Data);
+  } catch (error) {
+    console.error(error);
+  }
+    };
+  
+    useEffect(() => {
+      fetch<%=name %>();
+    }, []);
+    <%_ } _%>
+    <%_ }  _%> 
+    useEffect(() => {
+      if (data?.<%=name.toLowerCase() %> == '') {
+        setSelectedItem('<%=name.toLowerCase() %>')
+      }
+    }, [data?.<%=name.toLowerCase() %>])
+    useEffect(() => {
+      if (!selectedItem.includes('<%=name.toLowerCase() %>'))
+      <%=SetStateName %>((prev: any) => ({ ...prev, <%=name.toLowerCase() %>: selectedItem }))
+    }, [selectedItem])
+  <%_ }else if(nodesElementInfo.type === 'Boolean'){ _%>
+    const [selectedItem, setSelectedItem] = useState<boolean | null>(null);
+    <%_ for (let i = 0; i < nodesElementInfo.props.length; i++) { _%>
+      <%_ if (nodesElementInfo.props[i].name === 'items') { _%>
+        const items = [{
+          action: () => setSelectedItem(true),
+          key: 'true',
+          text: 'True'
+        },
+        {
+          action: () => setSelectedItem(false),
+          key: 'false',
+          text: 'False'
+        }
+        ]
+        <%_ } _%>
+      <%_ } _%>
+      {/*useEffect(() => {
+        if (data?.<%=name.toLowerCase() %> == '') {
+          setSelectedItem(null)
+        }
+      }, [data?.<%=name.toLowerCase() %>])*/}
+      useEffect(() => {
+        if (selectedItem !== null) {
+          <%=SetStateName %>((prev: any) => ({ ...prev, <%=name.toLowerCase() %>: selectedItem }))
+        }
+      }, [selectedItem])
+  <%_ }_%>  
+  
+  <%_ let columnStart = nodes.grid.column.start  _%>  
+  <%_ let columnEnd = nodes.grid.column.end  _%>
+  <%_ let rowStart = nodes.grid.row.start  _%>
+  <%_ let rowEnd = nodes.grid.row.end  _%>
+  <%_ let gap = nodes.grid.style.gap  _%>
+  return (
+    <div className="col-start-<%= columnStart %> col-end-<%= columnEnd %> row-start-<%= rowStart %> row-end-<%= rowEnd %> gap-<%= gap %>" >
+      <%_ if (nodesElementInfo.type.toLowerCase() === 'dynamic') { _%>
+        <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+          <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+        <ActionTooltip <%_ for(let j=0;j<nodesElementInfo.props[i].tooltipProps.length;j++) { _%><%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "title" && nodesElementInfo.props[i].tooltipProps[j].value !== ""){ _%><%= ' '  %>title="<%= nodesElementInfo.props[i].tooltipProps[j].value %>"<%_ } _%> <%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "placement" && nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue.length){ _%><%_ %><%= ' '  %>placement="<%= nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue[0] %>"<%_ } _%><%_ } _%>>
+            <%_ } _%>
+        <%_ } _%>
+        <Select placeholder={keyset("<%= nodesElementInfo.label %>")} filterable={true} hasClear={true} onUpdate={handlechange} value={<%= StateName %>?.<%=name.toLowerCase() %> ? [<%= StateName %>?.<%=name.toLowerCase() %>] : []}>
+          {<%= name %>Options.map((option, index) => (
+            <Select.Option key={index} value={option}>
+              {option}
+            </Select.Option>
+          ))}
+        </Select>
+        <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+          <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+      </ActionTooltip>
+          <%_ } _%>
+      <%_ } _%>
+      <%_ }else{ _%>
+      <DropdownMenu
+        renderSwitcher={(props) => (
+          <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+            <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+          <ActionTooltip <%_ for(let j=0;j<nodesElementInfo.props[i].tooltipProps.length;j++) { _%><%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "title" && nodesElementInfo.props[i].tooltipProps[j].value !== ""){ _%><%= ' '  %>title="<%= nodesElementInfo.props[i].tooltipProps[j].value %>"<%_ } _%> <%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "placement" && nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue.length){ _%><%_ %><%= ' '  %>placement="<%= nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue[0] %>"<%_ } _%><%_ } _%>>
+              <%_ } _%>
+          <%_ } _%>
+            <Button {...props} view="flat">
+              {/*{keyset(selectedItem)}*/}
+              {keyset(selectedItem !== null ? String(selectedItem) : '<%=nodesElementInfo.label %>')}
+            </Button>
+            <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+              <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].enum.selectedValue[0] === "true"){ _%>
+          </ActionTooltip>
+              <%_ } _%>
+          <%_ } _%>
+        )}
+        <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+          <%_ if(nodesElementInfo.props[i].name==="items" && nodesElementInfo.props[i].title !== ""){ _%>
+        items={items}
+          <%_ } _%>
+          <%_ } _%>
+      />
+    <%_ } _%>
+    </div>
+  );
+};
+
+export default Dropdown<%=name %>;

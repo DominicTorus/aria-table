@@ -1,0 +1,93 @@
+<%_ let column = data _%>
+<%_ let tabName = relation _%>
+import { Controller, Get, Post, Body, Patch, Param, Delete,UseGuards,Query,Req} from '@nestjs/common';
+import { <%= tabName %>Service } from './<%= tabName %>.service';
+import { Prisma } from '@prisma/client';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { <%= tabName.toLowerCase() %>Entity } from './entity/<%= tabName %>.entity';
+import { AbilitiesGuard } from 'src/ability/ability.guard';
+import { CheckAbilities } from 'src/ability/ability.decorator';
+
+ 
+@Controller('<%= tabName.toLowerCase() %>')
+@ApiTags('<%= tabName %>')
+export class <%= tabName %>Controller {
+  constructor(private readonly <%= tabName.toLowerCase() %>Service: <%= tabName %>Service) {}
+
+  @Get("/schema")
+  @ApiOkResponse({ type: <%= tabName.toLowerCase() %>Entity })
+  findSchema(@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.findSchema(token);
+  }
+
+  @Get('/get')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "<%= tabName.toLowerCase() %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase() %>Entity, isArray: true })
+  findAllmethod(@Query() query: any,@Body() body: any) {
+    const { limit }:{ limit:number } = query;
+    const { selectColumns}:{ selectColumns:any } = body;
+    return this.<%= tabName.toLowerCase() %>Service.findAllmethod(query, +limit,selectColumns);
+  }
+
+<%_ column.entities.methods.forEach((method) => { _%>
+  <%_ if(method.methodName === 'Post' && method.isActive.value === true) { _%>  
+  @Post()
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Post', subject: "<%= tabName.toLowerCase()  %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase()  %>Entity })
+  create(@Body() create<%= tabName %>Dto: Prisma.<%= tabName.toLowerCase() %>CreateInput,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.create(create<%= tabName %>Dto,token);
+  }
+ 
+    <%_ } _%>
+  <%_ if(method.methodName === 'GetALL' && method.isActive.value === true) { _%>  
+  @Get()
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "<%= tabName.toLowerCase()  %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase()  %>Entity, isArray: true })
+  findAll(@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.findAll(token);
+  }
+ 
+  <%_ } _%>
+  <%_ if(method.methodName === 'Get' && method.isActive.value === true) { _%>  
+  @Get('<%_ for(let i=0;i<method.QueryConditions.selectedValue.length;i++){ _%>:<%= method.QueryConditions.selectedValue[i] %><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>/<%_ }} _%>')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Get', subject: "<%= tabName.toLowerCase()  %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase()  %>Entity })
+  findOne(<%_ for(let i=0;i<method.QueryConditions.selectedValue.length;i++){ _%>@Param('<%= method.QueryConditions.selectedValue[i] %>') <%= method.QueryConditions.selectedValue[i] %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>number<% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><%_ } _%><%_ } _%><%_ } _%><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>,<% }} %>,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.findOne(<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++) { _%><%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>+<%= method.QueryConditions.selectedValue[i] %><% } else {%><%= method.QueryConditions.selectedValue[i] %><%_} _%><%_ } _%><%_ } _%><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>,<% }} %>,token);
+  }
+ 
+  <%_ } _%>
+  <%_ if(method.methodName === 'Put' && method.isActive.value === true) { _%>
+  @Patch('<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++){ _%>:<%= method.QueryConditions.selectedValue[i] %><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>/<%_ }} _%>')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Update', subject: "<%= tabName.toLowerCase()  %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase()  %>Entity })
+  update(<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++){ _%>@Param('<%= method.QueryConditions.selectedValue[i] %>') <%= method.QueryConditions.selectedValue[i] %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>number<% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><%_ } _%><%_ } _%><%_ } _%>,<% } %>
+    @Body() update<%= tabName %>Dto: Prisma.<%= tabName.toLowerCase() %>UpdateInput,
+    @Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.update(<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++) { _%><%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>+<%= method.QueryConditions.selectedValue[i] %><% } else {%><%= method.QueryConditions.selectedValue[i] %><%_} _%><%_ } _%><%_ } _%>,<% } %> update<%= tabName %>Dto,token);
+  }
+ 
+  <%_ } _%>
+  <%_ if(method.methodName === 'Delete' && method.isActive.value == true) { _%>
+  @Delete('<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++){ _%>:<%= method.QueryConditions.selectedValue[i] %><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>/<%_ }} _%>')
+  //@UseGuards(AbilitiesGuard)
+  //@CheckAbilities({ action: 'Delete', subject: "<%= tabName.toLowerCase()  %>"})
+  @ApiOkResponse({ type: <%= tabName.toLowerCase()  %>Entity })
+  remove(<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++){ _%>@Param('<%= method.QueryConditions.selectedValue[i] %>') <%= method.QueryConditions.selectedValue[i] %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>number<% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><%_ } _%><%_ } _%><%_ } _%><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>,<% }} %>,@Req() req: any) {
+    const token = req.headers.authorization;
+    return this.<%= tabName.toLowerCase() %>Service.remove(<%_ for (let i=0; i < method.QueryConditions.selectedValue.length; i++) { _%><%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int'){ %>+<%= method.QueryConditions.selectedValue[i] %><% } else {%><%= method.QueryConditions.selectedValue[i] %><%_} _%><%_ } _%><%_ } _%><%_ if (i !== method.QueryConditions.selectedValue.length-1) { _%>,<% }} %>,token);
+  }  
+  <%_ } _%>
+  <%_ }) _%>
+ 
+}

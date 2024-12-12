@@ -1,0 +1,14 @@
+{
+  "bg": "#2A3045",
+  "bgCard": "#050C24",
+  "border": "#495271",
+  "borderLine": "#495271",
+  "text": "#FFFFFF",
+  "clipPathText": "#000000",
+  "textOpacity/15": "#FFFFFF26",
+  "textOpacity/35": "#FFFFFF59",
+  "textOpacity/50": "#FFFFFF80",
+  "opacity": "1",
+  "profileColor": "#FFFFFF",
+  "name": "Eclipse"
+}

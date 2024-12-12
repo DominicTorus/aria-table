@@ -1,0 +1,66 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let ufKey = relation[1] _%>
+<%_ let eventArray = data1[0] _%>
+<%_ let groupName = data1[1] _%>
+<%_ let controlName = data1[2] _%>
+<%_ let handler = []; _%>
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final GSFABSizes size;
+  final GSFABPlacements placement;
+  final bool isDisabled;
+  final IconData? icon;
+  final String? label;
+  const <%= relation[0] %>({
+    super.key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop=> { _%>
+         <%_
+        propName = prop.name;
+        selectedValue = prop.enum.selectedValue;
+        if(selectedValue && selectedValue.length > 0){
+          selectedValue = prop.enum.selectedValue;
+        } else{
+          selectedValue = prop.default;
+        }
+      _%>
+      <%_ if(propName === 'size'){ _%>
+    this.size = GSFABSizes.$<%= selectedValue %>,
+      <%_ } _%>
+      <%_ if(propName === 'placement'){ _%>
+    this.placement = GSFABPlacements.<%= selectedValue %>,
+      <%_ } _%>
+      <%_ if(propName === 'isDisabled'){ _%>
+    this.isDisabled = <%= selectedValue %>,
+      <%_ } _%>
+      <%_ if(propName === 'icon'){ _%>
+    this.icon <%_ if(prop.value) {_%> = Icons.<%= prop.value %><%_ } _%>,
+      <%_ } _%>
+      <%_ if(propName === 'label'){ _%>
+    this.label <%_ if(prop.value) {_%> = '<%= prop.value %>' <%_ } _%>,
+      <%_ } _%>
+      <%_ }); _%>
+    <%_ } else { _%>
+    this.size = GSFABSizes.$md,
+    this.placement = GSFABPlacements.bottomRight,
+    this.isDisabled = false,
+    this.icon,
+    this.label,
+    <%_ } _%>
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSFab(
+      size: size,
+      placement: placement,
+      onPressed: () {},
+      isDisabled: isDisabled,
+      icon: GSFabIcon(icon: icon ?? Icons.error),
+      label: GSFabLabel(text: label ?? ''),
+    );
+  }
+}

@@ -1,0 +1,98 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final String text;
+  final GSSizes size;
+  final double? letterSpacing;
+  final TextOverflow? overflow;
+  final TextAlign? textAlign;
+  final TextDirection? textDirection;
+  final bool bold;
+  final bool highlight;
+  final bool isTruncated;
+  final bool italic;
+  final bool strikeThrough;
+  final bool underline;
+  final Color? textColor;
+  const <%= relation[0] %>({
+    super.key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          } 
+        _%>                                           
+       <%_ if (propName === "text") { _%>
+        this.text <%_ if(prop.value) {_%> '<%= prop.value %>'
+        <%_ }, _%> ,
+        <%_ } _%>
+        <%_ if (propName === "size") { _%>
+          this.size = GSSizes.$<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "letterSpacing") { _%>
+          this.letterSpacing = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "bold") { _%>
+          this.bold = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "highlight") { _%>
+          this.highlight = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "isTruncated") { _%>
+          this.isTruncated = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "italic") { _%>
+          this.italic = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "strikeThrough") { _%>
+          this.strikeThrough = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "underline") { _%>
+          this.underline = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "overflow") { _%>
+          this.overflow = TextOverflow.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textAlign") { _%>
+          this.textAlign = TextAlign.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "textDirection") { _%>
+          this.textDirection = TextDirection.<%= selectedValue %>,  
+        <%_ } _%>
+        <%_ if (propName === "textColor") { _%>
+          this.textColor = <%= selectedValue %>,
+        <%_ } _%>
+      <%_ }); _%>
+    <%_ } _%>
+   
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GSText(
+      text: text,
+      size: size,
+      style: GSStyle(
+        textStyle: TextStyle(
+            letterSpacing: letterSpacing ?? $GSLetterSpacing.$md,
+            color: textColor),
+      ),
+      overflow: overflow,
+      textAlign: textAlign,
+      textDirection: textDirection,
+      bold: bold,
+      highlight: highlight,
+      isTruncated: isTruncated,
+      italic: italic,
+      strikeThrough: strikeThrough,
+      underline: underline,
+    );
+  }
+}

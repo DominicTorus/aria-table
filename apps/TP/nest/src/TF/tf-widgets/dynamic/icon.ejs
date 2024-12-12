@@ -1,0 +1,33 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class <%= relation[0] %> extends StatelessWidget {
+  final IconData icon;
+  final GSIconSizes size;
+  final Color? color;
+  final Function()? onTap;
+  const <%= relation[0] %>({
+    super.key,
+    this.icon = Icons.question_mark,
+    this.size = GSIconSizes.$md,
+    this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: GSIcon(
+        icon: icon,
+        size: size,
+        style: GSStyle(
+          color: color,
+        ),
+        semanticLabel: icon.toString(),
+      ),
+    );
+  }
+}

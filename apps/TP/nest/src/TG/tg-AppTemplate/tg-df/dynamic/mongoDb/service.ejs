@@ -1,0 +1,214 @@
+<%_ let column = data _%>
+<%_ let tabName = relation _%>
+import { HttpException, Injectable,HttpStatus } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import * as v from 'valibot';
+import { errorObj } from 'src/interfaces/errorObj.interface';
+import { CommonService } from 'src/commonService';
+
+@Injectable()
+export class <%= tabName %>Service {
+  constructor(private readonly prismaService: PrismaService,
+  private readonly commonService: CommonService) {}
+
+  async findAllmethod(queryDto: any, limit:number,selectColumns:any) {
+    try {
+      let queryCondition:any ={}
+      let queryValue:any = {}
+      let columns:any = {}
+      selectColumns.forEach(element => {
+        columns[element] = true
+      });
+      Object.keys(queryDto).forEach((key) => {
+        if (key.includes('-')) {
+          queryCondition[key.split('-')[0]] = key.split('-')[1]
+          queryValue[key.split('-')[0]] = queryDto[key]
+        }
+      })      
+      const { page }: { page: number } = queryDto;
+      let query: any = {}; 
+      <%_ column.entities.attributes.forEach(column => { _%> 
+      <%_ if(column.cname) { _%>
+      const { <%= column.cname.toLowerCase() %> }: {<%= column.cname.toLowerCase() %> : <% if (column.dataType.selectedValue === 'Int'){ %>number<% } else if(column.dataType.selectedValue === 'DateTime') {%> Date<% } else {_%> <%= column.dataType.selectedValue.toLowerCase() %><% } %>} = queryValue;
+      <%_ } _%> 
+      <%_ }) _%>
+
+      <%_ column.entities.attributes.forEach(column => { _%> 
+      <%_ if(column.cname) { _%>
+      if(<%= column.cname.toLowerCase() %>){ 
+        query.<%= column.cname.toLowerCase() %> = { [queryCondition['<%= column.cname.toLowerCase() %>']]: <%= column.cname.toLowerCase() %> };
+      }
+      <%_ } _%> 
+      <%_ }) _%> 
+      const skip = (page - 1) * limit;
+      if (Object.keys(query).length > 0) {
+        const banks = await this.prismaService.<%= tabName.toLowerCase() %>.findMany({
+          select:columns,
+          where: query,          
+        });
+        return banks;
+      }
+
+      if(!skip && !limit && Object.keys(query).length == 0){
+        const banks = await this.prismaService.<%= tabName.toLowerCase() %>.findMany({
+          select:columns,
+        });
+        return banks;
+      }
+
+      const banks = await this.prismaService.<%= tabName.toLowerCase() %>.findMany({
+        select:columns,
+        where: query,
+        skip: skip,
+        take: limit,
+      });
+
+      const totalItems = await this.prismaService.<%= tabName.toLowerCase() %>.count({
+        where: query,
+      });
+
+      return {
+        items: banks,
+        totalPages: Math.ceil(totalItems / limit),
+      };
+    } catch (error) {
+      console.error('Error in findAllmethod:', error);
+      throw new Error('Failed to fetch data'); 
+    }
+  }
+
+  <%_ column.entities.methods.forEach((method) => { _%>
+  <%_ if(method.methodName === 'Post' && method.isActive.value === true) { _%> 
+  async create(create<%= tabName %>Dto: Prisma.<%= tabName.toLowerCase() %>CreateInput,token:string) {
+    try{
+      const dataSchema:any =  v.object({
+        <%_ column.entities.attributes.forEach(attribute => { _%>
+          <%_ if (attribute.cname !== '' ) { _%>
+          <%_ if(!attribute.constraints.includes('@id @default(autoincrement())')){ _%>
+          <%_ if(!attribute.isRequired.value){ _%>
+            <%= attribute.cname.toLowerCase() %> :  v.optional( <%_ if(attribute.dataType.selectedValue === 'Int' ) {  _%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.number() <%_ if(attribute.length !== ''){ _%>,v.maxValue(<%= '9'.repeat(attribute.length) %> )) <%_ } _%>  <%_ }else if(attribute.dataType.selectedValue === 'String' ) {_%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.string() <%_ if(attribute.length !== ''){ _%>,v.maxLength(<%= attribute.length %> )) <%_ } _%> <%_ } else if(attribute.dataType.selectedValue === 'Boolean') {_%> v.boolean() <% }else if(attribute.dataType.selectedValue === 'DateTime') {_%> (v.pipe(v.string(),v.isoDate())) <% } %> ), 
+            <%_ } _%>
+          <%_ } _%>
+          <%_ if(!attribute.constraints.includes('@id @default(autoincrement())')){ _%>
+          <%_ if(attribute.isRequired.value){ _%>
+            <%= attribute.cname.toLowerCase() %> : <%_ if(attribute.dataType.selectedValue === 'Int' ) {  _%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.number() <%_ if(attribute.length !== ''){ _%>,v.maxValue(<%= '9'.repeat(attribute.length) %> )) <%_ } _%>  <%_ }else if(attribute.dataType.selectedValue === 'String' ) {_%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.string() <%_ if(attribute.length !== ''){ _%>,v.maxLength(<%= attribute.length %> )) <%_ } _%> <%_ } else if(attribute.dataType.selectedValue === 'Boolean') {_%> v.boolean() <% }else if(attribute.dataType.selectedValue === 'DateTime') {_%> (v.pipe(v.string(),v.isoDate())) <% } %> , 
+            <%_ } _%>
+            <%_ } _%>
+            <%_ } _%>          
+        <%_ }) _%>  
+        });
+        let validate : any = v.safeParse(dataSchema,create<%= tabName %>Dto);
+        if (!validate.success) {
+          let errorObj: errorObj = {
+            tname: 'TG',
+            errGrp: 'Data',
+            fabric: 'DF',
+            errType: 'Fatal',
+            errCode: 'TG101',
+          };
+          const errorMessage = validate.issues[0].message;
+          const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+          let errObj = await this.commonService.commonErrorLogs(
+            errorObj,
+            token,
+            'dfKey',
+            errorMessage,
+            statusCode,
+          );
+          return errObj;
+        }
+      const res = await this.prismaService.<%= tabName.toLowerCase() %>.create({ 
+      data: create<%= tabName %>Dto, 
+      select:{<%_ const result = method.QueryParams.selectionList.filter(item => !method.QueryParams.selectedValue.includes(item)) _%><%_ for(let i=0;i<result.length;i++){ _%><%= result[i].toLowerCase() %>:true<% if (i !== result.length-1){ %>,<%_ } _%><%_ } %>,next_status:true,status:true}
+    })
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+    
+  }
+
+  <%_ } _%>
+  <%_ if(method.methodName === 'GetALL' && method.isActive.value === true) { _%> 
+  async findAll(token : string) {
+    try{
+      const res = await this.prismaService.<%= tabName.toLowerCase() %>.findMany({ 
+      select: {<%_ let result = method.QueryParams.selectionList.filter(item => !method.QueryParams.selectedValue.includes(item)) _%><%_ for(let i=0;i<result.length;i++){ _%><%= result[i].toLowerCase() %>:true<% if (i !== result.length-1) { %>,<%_ } _%><%_ } %>,next_status:true,status:true,process_id:true}
+      });
+      return res;
+    } catch (error) {
+      throw new HttpException(error.message, 400, {});
+    }
+    }
+    
+  <%_ } _%>
+  <%_ if(method.methodName === 'Get' && method.isActive.value === true) { _%> 
+    async findOne(<%_ for(let i=0;i<method.QueryConditions.selectedValue.length;i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int' && column.entities.attributes[j].constraints !=="@id @default(autoincrement())"){ %>number<%_}%> <%_if(column.entities.attributes[j].constraints ==="@id @default(autoincrement())"){%>string  <% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><% } %><%_ } _%><%_ } _%><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} _%>,token : string) {
+    try{
+      const res = await this.prismaService.<%= tabName.toLowerCase() %>.findUnique({ 
+      where: {<%_ for (let i=0; i< method.QueryConditions.selectedValue.length; i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} _%> },
+      select: {<%_ const result = method.QueryParams.selectionList.filter(item => !method.QueryParams.selectedValue.includes(item)) _%><%_ for(let i=0;i<result.length;i++){ _%><%= result[i].toLowerCase() %>:true<% if (i !== result.length-1) { %>,<%_ } _%><%_ } %>,next_status:true,status:true,process_id:true}
+    });
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+  }
+
+  <%_ } _%>
+  <%_ if(method.methodName === 'Put' && method.isActive.value === true) { _%>
+    async update(<%_ for(let i=0;i<method.QueryConditions.selectedValue.length;i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int' && column.entities.attributes[j].constraints !=="@id @default(autoincrement())"){ %>number<%_}%> <%_if(column.entities.attributes[j].constraints ==="@id @default(autoincrement())"){%>string<% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><% } %><%_ } _%><%_ } _%><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} _%>, update<%= tabName %>Dto: Prisma.<%= tabName.toLowerCase() %>UpdateInput,token:string) {    
+      const dataSchema:any =  v.object({
+      <%_ column.entities.attributes.forEach(attribute => { _%>
+        <%_ if (attribute.cname !== '') { _%>
+          <%_ if(!attribute.constraints.includes('@id @default(autoincrement())')){ _%>
+          <%= attribute.cname.toLowerCase() %> :  v.optional( <%_ if(attribute.dataType.selectedValue === 'Int' ) {  _%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.number() <%_ if(attribute.length !== ''){ _%>,v.maxValue(<%= '9'.repeat(attribute.length) %> )) <%_ } _%>  <%_ }else if(attribute.dataType.selectedValue === 'String' ) {_%> <%_ if(attribute.length === ''){ _%> <%_ }else {_%>v.pipe( <%_ } _%> v.string() <%_ if(attribute.length !== ''){ _%>,v.maxLength(<%= attribute.length %> )) <%_ } _%> <%_ } else if(attribute.dataType.selectedValue === 'Boolean') {_%> v.boolean() <% }else if(attribute.dataType.selectedValue === 'DateTime') {_%> (v.pipe(v.string(),v.isoDate())) <% } %>), 
+        <%_ } _%>    
+        <%_ } _%>    
+      <%_ }) _%>  
+      });
+      let validate : any = v.safeParse(dataSchema,update<%= tabName %>Dto);
+      if (!validate.success) {
+        let errorObj: errorObj = {
+          tname: 'TG',
+          errGrp: 'Data',
+          fabric: 'DF',
+          errType: 'Fatal',
+          errCode: 'TG101',
+        };
+        const errorMessage = validate.issues[0].message;
+        const statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        let errObj = await this.commonService.commonErrorLogs(
+          errorObj,
+          token,
+          'dfKey',
+          errorMessage,
+          statusCode,
+        );
+        return errObj;
+      }
+      const res = await this.prismaService.<%= tabName.toLowerCase() %>.update({
+      where: {<%_ for (let i=0; i< method.QueryConditions.selectedValue.length; i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} _%> },
+      data: update<%= tabName %>Dto,
+      select: {<%_ const result = method.QueryParams.selectionList.filter(item => !method.QueryParams.selectedValue.includes(item)) _%><%_ for(let i=0;i<result.length;i++){ _%><%= result[i].toLowerCase() %>:true<% if (i !== result.length-1) { %>,<%_ } _%><%_ } %>,next_status:true,status:true}
+    });
+    return res;    
+}
+
+  <%_ } _%>
+  <%_ if(method.methodName === 'Delete' && method.isActive.value === true) { _%>
+    async remove(<%_ for(let i=0;i<method.QueryConditions.selectedValue.length;i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %>:<%_for(let j=0; j< column.entities.attributes.length; j++){ _%><%_ if(column.entities.attributes[j].cname === method.QueryConditions.selectedValue[i]){ _%><% if (column.entities.attributes[j].dataType.selectedValue === 'Int' && column.entities.attributes[j].constraints !=="@id @default(autoincrement())"){ %>number<%_}%> <%_if(column.entities.attributes[j].constraints ==="@id @default(autoincrement())"){%>string<% } else {%> <%= column.entities.attributes[j].dataType.selectedValue.toLowerCase() %><% } %><%_ } _%><%_ } _%><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} _%>,token : string) {
+    try{
+      const res = await this.prismaService.<%= tabName.toLowerCase() %>.delete({
+      where: {<%_ for (let i=0; i< method.QueryConditions.selectedValue.length; i++){ _%><%= method.QueryConditions.selectedValue[i].toLowerCase() %><% if (i !== method.QueryConditions.selectedValue.length-1) { %>,<%_ }} %> },
+      select: {<%_ const result = method.QueryParams.selectionList.filter(item => !method.QueryParams.selectedValue.includes(item)) _%><%_ for(let i=0;i<result.length;i++){ _%><%= result[i].toLowerCase() %>:true<% if (i !== result.length-1) { %>,<%_ } _%><%_ } %>,next_status:true,status:true,process_id:true}
+    });
+    return res;
+  } catch (error) {
+    throw new HttpException(error.message, 400, {});
+  }
+  }
+  <%_ } _%>
+  <%_ }) _%>
+}

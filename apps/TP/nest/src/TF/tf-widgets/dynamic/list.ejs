@@ -1,0 +1,733 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let ufKey = relation[1]; _%>
+<%_ let groupName = data1[1]; _%>
+<%_ let controlName = data1[1]; _%>
+import 'package:flutter/material.dart';
+import '../../../exports.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final bool showSearchBar;
+  final bool showSearchHistory;
+  final bool showPagination;
+  final bool showItemperPageSelector;
+  final SearchBarBorder searchBorderStyle;
+  final List<Map<String, dynamic>> dynamicData;
+  final List<String> fieldsToDisplay;
+  final LoaderType loaderType;
+  final Widget connectedSource;
+  final String? action;
+
+  const <%= relation[0] %>({
+    super.key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "showSearchBar") { _%>
+          this.showSearchBar = <%= selectedValue %> ,
+        <%_ } _%>
+        <%_ if (propName === "showSearchHistory") { _%>
+          this.showSearchHistory =<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "showPagination") { _%>
+          this.showPagination = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "showItemperPageSelector") { _%>
+          this.showItemperPageSelector = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "searchBorderStyle") { _%>
+          this.searchBorderStyle = SearchBarBorder.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "loaderType") { _%>
+          this.loaderType = LoaderType.<%= selectedValue %>,
+        <%_ } _%>
+      <%_ }); _%>
+    <%_ } else {_%>
+      this.showSearchBar = false,
+      this.showSearchHistory = false,
+      this.showPagination = false,
+      this.showItemperPageSelector = false,
+      this.searchBorderStyle = SearchBarBorder.outlined,
+      this.loaderType = LoaderType.circular,
+    <%_ } _%>
+    this.dynamicData = const [],
+    this.fieldsToDisplay = const [<%_ relation[2].map((col)=> { _%>'<%= col %>', <%_ }) _%>],
+    this.connectedSource = const SizedBox(),
+    this.action,
+  });
+
+  @override
+  State<<%= relation[0] %>> createState() => <%= relation[0] %>State();
+}
+
+class <%= relation[0] %>State extends State<<%= relation[0] %>> {
+  final TextEditingController _searchController = TextEditingController();
+  List<dynamic> _filteredItems = [];
+  final List<String> _searchHistory = [];
+  bool isLoading = false;
+  // ignore: unused_field
+  bool _isMultiSelectMode = false;
+  final Set<Map<String, dynamic>> _selectedItems = {};
+  ListSelectionType selectionType = ListSelectionType.single;
+  int _currentPage = 1;
+  int _itemsPerPage = 10;
+  int _totalRecords = 0;
+  String? dfkey;
+  String? processkey;
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredItems = widget.dynamicData;
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+    await getActionsDeatils();
+    await getDFkey('<%= ufKey %>');
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void clearItems() async {
+    setState(() {
+      _searchController.text = '';
+      _selectedItems.clear();
+      Provider.of<DataModel>(context, listen: false).clearData();
+    });
+    await getActionsDeatils();
+    await getDFkey('<%= ufKey %>');
+  }
+
+  void clearCurrrentItem(Map<String, dynamic> data) async {
+    if (_selectedItems.contains(data)) {
+      _selectedItems.remove(data);
+      Provider.of<DataModel>(context, listen: false).removeData(data);
+    } else {
+      _selectedItems.add(data);
+      Provider.of<DataModel>(context, listen: false).addData(data);
+    }
+  }
+
+  void clearSelectedCurrentItemOnly() {
+    setState(() {
+      _searchController.text = '';
+      _selectedItems.clear();
+      _loadData();
+    });
+  }
+
+  // GET LIST DATA
+  Future<void> getDFkey(String ufKey) async {
+    try {
+      final response = await ApiService.get(
+        '${Constants.ufKeyDetails}<%= ufKey %>',
+        null
+      );
+      if (response!.statusCode == 200) {
+        setState(() {
+          dfkey = jsonDecode(response.body)[0].toString();
+        });
+        await refreshlistData('<%= ufKey %>');
+      } else {
+        Common.flutterToaster('Error getting DF key','f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching DF key', 'f');
+    }
+  }
+
+  Future<void> refreshlistData(String ufKey) async {
+    final token = await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+    try {
+      final response = await ApiService.post(
+        Constants.refreshList,
+        {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        {"key": dfkey, "upId": ""}
+      );
+      if (response!.statusCode == 201) {
+        await getDF('<%= ufKey %>');
+      } else {
+        Common.flutterToaster('Error refreshing list', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error refreshing list', 'f');
+    }
+  }
+
+  Future<void> getDF(String ufKey) async {
+    final token = await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+    try {
+      final response = await ApiService.post(
+        Constants.getDFDetails,
+        {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        {"key": dfkey}
+      );
+      if (response!.statusCode == 201) {
+        setState(() {
+          processkey = jsonDecode(response.body)['processKey'];
+        });
+        await getRuleDetails('<%= ufKey %>', '<%_ groupName _%>', '<%_ controlName _%>');
+      } else {
+        Common.flutterToaster('Error getting Data Source', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error getting Data Source', 'f');
+    }
+  }
+
+  Future<void> getRuleDetails(String ufKey, String groupName, String controlName) async {
+    try {
+      final rulwDetails = await ApiService.post(
+        Constants.getRuleDetails,
+        {
+          'Content-Type': 'application/json',
+          //'Authorization': 'Bearer $token'
+        },
+        {"key": '<%= ufKey %>', "groupName": '<%_ groupName _%>', "controlName": '<%_ controlName _%>'}
+      );
+      if (rulwDetails!.statusCode == 201) {
+        if (jsonDecode(rulwDetails.body).runtimeType == String) {
+          final response = await ApiService.post(
+            Constants.getPaginationDetails,
+            {
+              'Content-Type': 'application/json',
+              //'Authorization': 'Bearer $token'
+            },
+            {
+              "key": processkey.toString(),
+              "page": _currentPage.toString(),
+              "count": "10",
+            }
+          );
+          if (response!.statusCode == 201) {
+            final jsonResponse = jsonDecode(response.body);
+            final records = jsonResponse['records'];
+            if (records != null && records.isNotEmpty) {
+              final filterData = await ApiService.post(
+                Constants.filterDetails,
+                {
+                  'Content-Type': 'application/json',
+                  //'Authorization': 'Bearer $token'
+                },
+                {"data": records, "key": '<%= ufKey %>'}
+              );
+              if (filterData!.statusCode == 201) {
+                final jsonData = jsonDecode(filterData.body);
+                setState(() {
+                  _filteredItems = jsonData['records'];
+                });
+              } else {
+                Common.flutterToaster('Error fetching filtered details','f');
+              }
+            } else {
+              Common.flutterToaster('No records found.', 'i');
+            }
+          } else {
+            Common.flutterToaster('Error fetching pagination details','f');
+          }
+        } else {
+          await getPagination(1);
+        }
+      }
+    } catch (e) {
+      Common.flutterToaster('Something went wrong', 'f');
+    }
+  }
+
+  Future<void> getPagination(int page) async {
+    try{
+      final response = await ApiService.post(
+        Constants.refreshList,
+        {
+          'Content-Type': 'application/json',
+          //'Authorization': 'Bearer $token'
+        },
+        {
+          "key": processkey.toString(),
+          "page": page.toString(),
+          "count": _itemsPerPage.toString(),
+          "filterDetails": {
+            "ufKey": "<%= ufKey %>:UO",
+            "nodeName": '<%_ groupName _%>',
+            "elementName":'<%_ controlName _%>'
+          }
+        }
+      );
+      if (response!.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final records = jsonResponse['records'];
+        _totalRecords = jsonResponse['totalRecords'];
+        if (records != null && records.isNotEmpty) {
+          final filterData = await ApiService.post(
+            Constants.filterDetails,
+            {
+              'Content-Type': 'application/json',
+              //'Authorization': 'Bearer $token'
+            },
+            {"data": records, "key": '<%= ufKey %>'}
+          );
+          if (filterData!.statusCode == 201) {
+            final jsonData = jsonDecode(filterData.body);
+            setState(() {
+              _filteredItems = jsonData;
+            });
+          } else {
+            Common.flutterToaster('Error fetching filtered data details','f');
+          }
+        } else {
+          Common.flutterToaster('No records found', 'w');
+        }
+      } else {
+        Common.flutterToaster('Error fetching pagination details','f');
+      }
+    } catch(e){
+      Common.flutterToaster('Error fetching pagination details','f');
+    }
+  }
+
+  Future<void> getActionsDeatils() async {
+    try {
+      final response = await ApiService.post(
+        Constants.getActions,
+        {
+          'Content-Type': 'application/json',
+          //'Authorization': 'Bearer $token'
+        },
+        {
+          "key": '<%= ufKey %>',
+          "groupName": '<%_ groupName _%>',
+          "controlName": '<%_ controlName _%>'
+        }
+      );
+      if (response!.statusCode == 201) {
+        setState(() {
+          _itemsPerPage = int.tryParse(jsonDecode(response.body)['paginationDetails']['count']) ?? 10;
+          _currentPage = int.tryParse(jsonDecode(response.body)['paginationDetails']['page']) ?? 1;
+          Provider.of<DataModel>(context, listen: false).setLockDetails('lockDetails', jsonDecode(response.body)['lockDetails']);
+          selectionType = jsonDecode(response.body)['lockDetails']['lockMode'].toString().toLowerCase() == 'multi' ? ListSelectionType.multi : ListSelectionType.single;
+        });
+      } else {
+        Common.flutterToaster('Error fetchActionDetails', 'f');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching action details', 'f');
+    }
+  }
+
+  void _filterItems(String query) {
+    if (query == '') {
+      _loadData();
+    }
+    setState(() {
+      _filteredItems = _filteredItems
+          .where((item) => item.values.any((value) =>
+              value.toString().toLowerCase().contains(query.toLowerCase())))
+          .toList();
+    });
+  }
+
+  void _addToSearchHistory(String query) {
+    if (query.isNotEmpty && !_searchHistory.contains(query)) {
+      setState(() {
+        _searchHistory.insert(0, query);
+      });
+    }
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _loadData();
+  }
+
+  List<dynamic> getPaginatedItems() {
+    int startIndex = 0;
+    int endIndex = startIndex + _itemsPerPage;
+
+    if (endIndex > _filteredItems.length) {
+      endIndex = _filteredItems.length;
+    }
+
+    if (startIndex >= _filteredItems.length) {
+      return [];
+    }
+
+    return _filteredItems.sublist(startIndex, endIndex);
+  }
+
+  void _goToPage(int page) async {
+    setState(() {
+      _currentPage = page;
+    });
+    await getPagination(_currentPage);
+  }
+
+  void _changeItemsPerPage(int itemsPerPage) {
+    setState(() {
+      _itemsPerPage = itemsPerPage;
+      _currentPage = 1;
+    });
+  }
+
+  Widget _buildCard(Map<String, dynamic> data) {
+    List<String> fieldsToDisplay = widget.fieldsToDisplay;
+
+    List<Widget> dataWidgets = fieldsToDisplay.map((key) {
+      return Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(key, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              data.containsKey(key) ? (data[key]?.toString() ?? '-') : '-',
+              style: TextStyle(
+                  color: data[key] == null ? Colors.grey : Colors.black),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+
+    bool isSelected = _selectedItems.contains(data);
+
+    return GestureDetector(
+      onLongPress: () {
+        setState(() {
+          if (selectionType == ListSelectionType.multi) {
+            _isMultiSelectMode = true;
+            _selectedItems.add(data);
+          }
+        });
+      },
+      onTap: () {
+        FocusScope.of(context).requestFocus(FocusNode());
+        setState(() {
+          if (selectionType == ListSelectionType.single) {
+            if (_selectedItems.contains(data)) {
+              _selectedItems.remove(data);
+              Provider.of<DataModel>(context, listen: false).removeData(data);
+            } else {
+              _selectedItems.clear();
+              Provider.of<DataModel>(context, listen: false).clearData();
+              _selectedItems.add(data);
+              Provider.of<DataModel>(context, listen: false).addData(data);
+            }
+          } else if (selectionType == ListSelectionType.multi) {
+            if (_selectedItems.contains(data)) {
+              _selectedItems.remove(data);
+              Provider.of<DataModel>(context, listen: false).removeData(data);
+            } else {
+              _selectedItems.add(data);
+              Provider.of<DataModel>(context, listen: false).addData(data);
+            }
+          }
+        });
+      },
+      child: Card(
+        elevation: 2.0,
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        color: isSelected ? Colors.grey[200] : Colors.white,
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Checkbox(
+                value: isSelected,
+                onChanged: (bool? newValue) {
+                  setState(() {
+                    if (newValue == true) {
+                      _selectedItems.add(data);
+                    } else {
+                      _selectedItems.remove(data);
+                    }
+                  });
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                  right: 8.0, left: 8.0, top: 42.0, bottom: 42.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: dataWidgets,
+              ),
+            ),
+            if (widget.action != null)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (selectionType == ListSelectionType.single) {
+                        if (_selectedItems.contains(data)) {
+                          _selectedItems.remove(data);
+                          Provider.of<DataModel>(context, listen: false)
+                              .removeData(data);
+                        } else {
+                          _selectedItems.clear();
+                          Provider.of<DataModel>(context, listen: false)
+                              .clearData();
+                          _selectedItems.add(data);
+                          Provider.of<DataModel>(context, listen: false)
+                              .addData(data);
+                        }
+                      } else if (selectionType == ListSelectionType.multi) {
+                        if (_selectedItems.contains(data)) {
+                          _selectedItems.remove(data);
+                          Provider.of<DataModel>(context, listen: false)
+                              .removeData(data);
+                        } else {
+                          _selectedItems.add(data);
+                          Provider.of<DataModel>(context, listen: false)
+                              .addData(data);
+                        }
+                      }
+                    });
+                      clearSelectedCurrentItemOnly();
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => widget.connectedSource));
+                  },
+                  child: Text(
+                    widget.action ?? '',
+                    style: const TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPagination() {
+    int totalPages =
+        (_totalRecords > 0) ? (_totalRecords / _itemsPerPage).ceil() : 1;
+
+    List<Widget> pageButtons = List.generate(totalPages, (index) {
+      int pageIndex = index + 1;
+      return GestureDetector(
+        onTap: () => _goToPage(pageIndex),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: _currentPage == pageIndex ? Colors.blue : Colors.transparent,
+            borderRadius: BorderRadius.circular(5.0),
+            border: Border.all(
+              color: _currentPage == pageIndex ? Colors.blue : Colors.grey,
+            ),
+          ),
+          child: Text(
+            '$pageIndex',
+            style: TextStyle(
+              color: _currentPage == pageIndex ? Colors.white : Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    });
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (widget.showPagination)
+          Container(
+            width: MediaQuery.of(context).size.width - 155,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _currentPage > 1
+                      ? () => _goToPage(_currentPage - 1)
+                      : null,
+                ),
+                // Wrap the page buttons inside a SingleChildScrollView
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: pageButtons,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _currentPage < totalPages
+                      ? () => _goToPage(_currentPage + 1)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        if (widget.showItemperPageSelector)
+          Row(
+            children: [
+              const Text('per page:'),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: _itemsPerPage,
+                onChanged: (int? newValue) {
+                  if (newValue != null) {
+                    _changeItemsPerPage(newValue);
+                  }
+                },
+                items: [5, 10, 15, 20, 25, 30]
+                    .map<DropdownMenuItem<int>>((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('$value'),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: Column(
+        children: [
+          if (widget.showSearchBar)
+            TextField(
+              controller: _searchController,
+              onChanged: _filterItems,
+              onSubmitted: (value) {
+                _addToSearchHistory(value);
+              },
+              decoration: InputDecoration(
+                labelText: 'Search',
+                suffixIcon: _searchController.text.isEmpty
+                    ? const Icon(Icons.search)
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: _clearSearch,
+                      ),
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
+          const SizedBox(height: 10),
+          if (widget.showSearchHistory && _searchHistory.isNotEmpty)
+            Container(
+              height: 50,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _searchHistory.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Chip(
+                      label: Text(_searchHistory[index]),
+                      onDeleted: () {
+                        setState(() {
+                          _searchHistory.removeAt(index);
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 10),
+          if (isLoading)
+            widget.loaderType == LoaderType.skeleton
+                ? _buildSkeletonLoader()
+                : const Center(child: CircularProgressIndicator()),
+          if (!isLoading && _filteredItems.isEmpty)
+            const Center(child: const Text("No data found")),
+          if (!isLoading && _filteredItems.isNotEmpty)
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _loadData,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: ListView.builder(
+                    itemCount: getPaginatedItems().length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final item = getPaginatedItems()[index];
+                      return _buildCard(item);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          if (!isLoading && _filteredItems.isNotEmpty) _buildPagination(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader() {
+    return ListView.builder(
+      itemCount: 5,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (context, index) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: SkeletonLoader(),
+        );
+      },
+    );
+  }
+}
+
+class SkeletonLoader extends StatelessWidget {
+  const SkeletonLoader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      color: Colors.grey[200],
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Container(
+              height: 15,
+              color: Colors.grey[300],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 15,
+              color: Colors.grey[300],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

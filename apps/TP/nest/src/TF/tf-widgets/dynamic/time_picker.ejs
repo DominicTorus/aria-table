@@ -1,0 +1,154 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+import 'package:flutter/material.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final String hintText;
+  final TimeOfDay? selectedTime;
+  final Function(TimeOfDay?)? onChanged;
+  final TimePickerSize size;
+  final TimePickerVariant variant;
+
+  const <%= relation[0] %>({
+    Key? key,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "selectedTime") { _%>
+          this.selectedTime = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "onChanged") { _%>
+          this.onChanged = <%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "size") { _%>
+          this.size = TimePickerSize.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "variant") { _%>
+          this.variant = TimePickerVariant.<%= selectedValue %>,
+        <%_ } _%>
+      <%_ }); _%>
+      <%_ if(data.elementInfo.label){ _%>
+        this.hintText = '<%= data.elementInfo.label %>',
+      <%_ } _%>
+    <%_ } _%>
+   
+  }) : super(key: key);
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  TimeOfDay? _selectedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTime = widget.selectedTime;
+  }
+
+  void _onChanged(TimeOfDay? newTime) {
+    setState(() {
+      _selectedTime = newTime;
+    });
+    if (widget.onChanged != null) {
+      widget.onChanged!(newTime);
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) _onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double height = 20;
+    double padding;
+    double fontSize;
+
+    switch (widget.size) {
+      case TimePickerSize.xl:
+        padding = 20.0;
+        fontSize = 18.0;
+        height = 50;
+        break;
+      case TimePickerSize.lg:
+        padding = 16.0;
+        fontSize = 16.0;
+        height = 45;
+        break;
+      case TimePickerSize.md:
+        padding = 12.0;
+        fontSize = 14.0;
+        height = 40;
+        break;
+      case TimePickerSize.sm:
+        padding = 8.0;
+        fontSize = 12.0;
+        height = 35;
+        break;
+    }
+
+    BoxDecoration getVariant() {
+      switch (widget.variant) {
+        case TimePickerVariant.underlined:
+          return BoxDecoration(
+            border: const Border(
+              bottom: BorderSide(color: Colors.grey, width: 1.0),
+            ),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case TimePickerVariant.outline:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case TimePickerVariant.rounded:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(50),
+              right: Radius.circular(50),
+            ),
+          );
+        default:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+      }
+    }
+
+    return GestureDetector(
+      onTap: () => _selectTime(context),
+      child: Container(
+        height: height,
+        padding: EdgeInsets.symmetric(horizontal: padding),
+        decoration: getVariant(),
+        child: Center(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _selectedTime != null
+                  ? _selectedTime!.format(context)
+                  : widget.hintText,
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

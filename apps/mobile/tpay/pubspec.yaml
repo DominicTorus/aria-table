@@ -1,0 +1,115 @@
+name: tpay
+description: "A new Flutter project."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  another_flutter_splash_screen: ^1.2.1
+  local_auth: ^2.2.0
+  qr_code_scanner: ^1.0.1
+  provider: ^6.1.2
+  getwidget: ^4.0.0
+  skeletonizer: ^1.4.1+1
+  intl_phone_field: ^3.2.0
+  get: ^4.6.6
+  connectivity: ^3.0.6
+  connectivity_plus: ^6.0.3
+  introduction_screen: ^3.1.14
+  intl_phone_number_input: ^0.7.4
+  flutter_intl_phone_field: ^0.0.4
+  contacts_service: ^0.6.3
+  permission_handler: ^11.3.1
+  sms_autofill: ^2.4.0
+  country_flags: ^3.0.0
+  shared_preferences: ^2.2.3
+  image_picker: ^1.1.2
+  open_settings: ^2.0.2
+  share: ^2.0.4
+  google_sign_in: ^6.2.1
+  qr_flutter: ^4.1.0
+  path_provider: ^2.1.4
+  dio: ^5.5.0+1
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
+  plaid_flutter: ^3.1.8
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/png/intro_vector.jpg
+    - assets/images/png/mobileNumber.png
+    - assets/images/png/auth.jpg
+    - assets/images/png/gpay_logo.png
+    - assets/images/gifs/intro.gif
+    - assets/images/png/TANGEDCO_Logo.png
+    - assets/images/png/blue_bg.png
+    - assets/images/png/railway6.jpg
+    - assets/images/png/midnight.jpg
+    - assets/images/png/loanbusiness.jpg
+    - assets/images/png/channels4_profile.jpg
+    - assets/images/png/confirmtlk.png
+    - assets/images/png/digit-insurance.png
+    - assets/images/png/redbus.png
+    - assets/images/png/unnamed.png
+    - assets/images/png/png.png
+    - assets/images/png/2f41fd.jpg
+    - assets/images/png/360_F.jpg
+    - assets/images/png/close.jpg
+    - assets/images/png/indian-man.jpg
+    - assets/images/png/istockphoto.jpg
+    - assets/images/png/Outdoors.jpg
+    - assets/images/png/pexels.jpeg
+    - assets/images/png/torus_logo.png
+    - assets/images/png/upi_logo.png
+    - assets/images/png/rewards.png
+    - assets/images/png/offers.png
+    - assets/images/png/referals.png
+    - assets/images/png/invite_bg.png
+    - assets/images/png/CANBK.NS.png
+    - assets/images/png/SBI-logo.png
+    - assets/images/png/HDFCBANK.png
+    - assets/images/png/QR.png
+    - assets/images/png/deposit.jpg
+    - assets/images/png/jio.png
+    - assets/images/png/new_registration.png
+    - assets/icons/torus.ico
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/assets-and-images/#resolution-aware
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/assets-and-images/#from-packages
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/custom-fonts/#from-packages

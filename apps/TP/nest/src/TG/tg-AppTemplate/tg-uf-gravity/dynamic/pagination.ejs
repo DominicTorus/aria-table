@@ -1,0 +1,58 @@
+'use client'
+<%_ let nodesElementInfo = data.elementInfo  _%>
+<%_ let nodes = data _%>
+<%_ let ufKey = data1[0].ufKey _%>
+<%_ let pfKey = data1[0].pfKey _%>
+<%_ let sfKey = data1[0].sfKey _%>
+<%_ let eventDetailsArray = data1[1] _%>
+<%_ let eventDetailsObj = data1[2] _%>
+<%_ let compDetailsLabel = data2 _%>
+import React from 'react' 
+import { PinInput } from '@gravity-ui/uikit';
+<%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+<%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].value === "true"){ _%>
+import { ActionTooltip } from '@gravity-ui/uikit';
+<%_ } _%>
+<%_ } _%>
+
+const PinInput<%=nodesElementInfo.label %> = ({data,setUser,checkToAdd,setCheckToAdd}:any) => {
+<%_ let columnStart = nodes.grid.column.start  _%>  
+<%_ let columnEnd = nodes.grid.column.end  _%>
+<%_ let rowStart = nodes.grid.row.start  _%>
+<%_ let rowEnd = nodes.grid.row.end  _%>
+<%_ let gap = nodes.grid.style.gap  _%>
+return (
+  <div className="col-start-<%= columnStart %> col-end-<%= columnEnd %> row-start-<%= rowStart %> row-end-<%= rowEnd %> gap-<%= gap %>" >
+    <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+    <%_ if(nodesElementInfo.props[i].name === "needTooltip"&& nodesElementInfo.props[i].enum.selectedValue.length && nodesElementInfo.props[i].value === "true"){ _%>
+    <ActionTooltip <%_ for(let j=0;j<nodesElementInfo.props[i].tooltipProps.length;j++) { _%><%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "title" && nodesElementInfo.props[i].tooltipProps[j].value !== ""){ _%><%= ' '  %>title="<%= nodesElementInfo.props[i].tooltipProps[j].value %>"<%_ } _%> <%_ if(nodesElementInfo.props[i].tooltipProps[j].name === "placement" && nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue.length){ _%><%_ %><%= ' '  %>placement="<%= nodesElementInfo.props[i].tooltipProps[j].enum.selectedValue[0] %>"<%_ } _%><%_ } _%>>
+    <%_ } _%>
+    <%_ } _%>
+    <PinInput 
+    <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+      <%_ if(nodesElementInfo.props[i].name === "size" && nodesElementInfo.props[i].enum.selectedValue.length !== ""){ _%>
+      size="<%= nodesElementInfo.props[i].value %>"
+      <%_ } _%>
+      <%_ if(nodesElementInfo.props[i].name === "length" && nodesElementInfo.props[i].value !== ""){ _%>
+      length={<%= nodesElementInfo.props[i].value %>}
+      <%_ } _%>
+      <%_ if(nodesElementInfo.props[i].name === "disabled" && nodesElementInfo.props[i].enum.selectedValue.length){ _%>
+      disabled={<%= nodesElementInfo.props[i].enum.selectedValue[0] %>}
+      <%_ } _%>
+      <%_ if(nodesElementInfo.props[i].name === "placeholder" && nodesElementInfo.props[i].value !== ""){ _%>
+      placeholder="<%= nodesElementInfo.props[i].value %>"
+      <%_ } _%>
+      <%_ if(nodesElementInfo.props[i].name === "mask" && nodesElementInfo.props[i].enum.selectedValue.length){ _%>
+      mask={<%= nodesElementInfo.props[i].enum.selectedValue[0] %>}
+      <%_ } _%>
+    <%_ } _%>
+    />
+    <%_ for(let i=0;i<nodesElementInfo.props.length;i++) { _%>
+    <%_ if(nodesElementInfo.props[i].name === "needTooltip" && nodesElementInfo.props[i].value === "true"){ _%>
+    </ActionTooltip>
+    <%_ } _%>
+    <%_ } _%>
+  </div>
+  )
+}
+export default PinInput<%=nodesElementInfo.label %>

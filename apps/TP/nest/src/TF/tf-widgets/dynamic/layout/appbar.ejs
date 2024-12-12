@@ -1,0 +1,36 @@
+import 'package:flutter/material.dart';
+import 'package:gluestack_ui/gluestack_ui.dart';
+
+class GAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final List<Widget>? actions;
+  final IconData? leadingIcon;
+  final VoidCallback? onLeadingPressed;
+
+  const GAppBar({
+    super.key,
+    required this.title,
+    this.actions,
+    this.leadingIcon,
+    this.onLeadingPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(title),
+      backgroundColor: $GSColors.primary100,
+      foregroundColor: $GSColors.white,
+      leading: leadingIcon != null
+          ? IconButton(
+              icon: Icon(leadingIcon),
+              onPressed: onLeadingPressed ?? () => Navigator.of(context).pop(),
+            )
+          : null,
+      actions: actions,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}

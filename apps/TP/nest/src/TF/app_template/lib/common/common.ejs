@@ -1,0 +1,39 @@
+import 'package:flutter/material.dart';
+import 'package:toastification/toastification.dart';
+
+class Common {
+  static void flutterToaster(String msg, String status) {
+    ToastificationType? type;
+    switch (status.toLowerCase()) {
+      case 's':
+        type = ToastificationType.success;
+        break;
+      case 'success':
+        type = ToastificationType.success;
+        break;
+      case 'f':
+        type = ToastificationType.error;
+        break;
+      case 'w':
+        type = ToastificationType.warning;
+        break;
+      case 'i':
+        type = ToastificationType.warning;
+        break;
+      default:
+        type = ToastificationType.info;
+    }
+
+    toastification.show(
+      title: Text(msg),
+      autoCloseDuration: const Duration(seconds: 5),
+      type: type,
+      style: ToastificationStyle.flatColored,
+      alignment: Alignment.bottomCenter,
+      foregroundColor: Colors.black,
+      dragToClose: true,
+      showIcon: true,
+      showProgressBar: true,
+    );
+  }
+}

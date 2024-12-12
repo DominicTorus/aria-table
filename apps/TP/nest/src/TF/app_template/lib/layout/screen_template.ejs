@@ -1,0 +1,1118 @@
+import 'package:gluestack_ui/gluestack_ui.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../exports.dart';
+<%_ function generateClassName(str) { 
+    return str.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(''); 
+  } _%>
+<%_ function isNumber(str) {
+    return !isNaN(str) && !isNaN(parseFloat(str));
+  } _%>
+
+class <%= generateClassName(data['name']) %> extends StatefulWidget {
+  final List<dynamic>? data;
+  const <%= generateClassName(data['name']) %>({super.key, this.data});
+
+  @override
+  State<<%= generateClassName(data['name']) %>> createState() => _<%= generateClassName(data['name']) %>State();
+}
+
+class _<%= generateClassName(data['name']) %>State extends State<<%= generateClassName(data['name']) %>> {
+  GlobalKey<GListState> globalListKey = GlobalKey();
+<%_ data['ufs'].forEach((item, index) => { _%>
+  <%_ if(item['type'] === 'textinput') { _%>  
+  final TextEditingController <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = TextEditingController();
+  <%_ } _%>
+<%_ if(item['type'] === 'textarea') { _%>  
+  final TextEditingController <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = TextEditingController();
+  <%_ } _%>
+<%_ if(item['type'] === 'button') { _%>  
+  bool <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = false;
+  <%_ } _%>
+<%_}) _%>
+
+<%_
+  let formData = [];
+  let rows = {};
+  let order;
+  let field;
+  let propName;
+  let selectedValue;
+  let selectedDropdownValues = [];
+  let selectedCheckBoxValues = [];
+  let requiredFields = [];
+  let handler = [];
+  let defaultLabels = [];
+  let actions;
+
+  if (data['ufs'].toString()) {
+    data['ufs'].forEach((item) => {
+      order = 0;
+      switch (item['type'].toString()) {
+        case 'button':
+          field = `Padding(
+          padding: const EdgeInsets.only(top: 12.0), child: GButton(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "action" ) {
+              field += `action: GSButtonActions.${selectedValue}, `;
+            }
+            if (propName === "variant" ) {
+              field += `variant: GSButtonVariants.${selectedValue}, `;
+            }
+            if (propName === "size" ) {
+              field += `size: GSButtonSizes.$${selectedValue}, `;
+            }
+            if (propName === "isDisabled" ) {
+              field += `isDisabled: ${selectedValue}, `;
+            }
+            if (propName === "enableSpinner") {
+              if (selectedValue) {
+                field += `enableSpinner: ${item['elementInfo']['label'].toLowerCase()}, `;
+              } else{
+                field += `enableSpinner: ${selectedValue}, `;
+              }
+            }
+            if (propName === "enableicon") {
+              field += `enableIcon: ${selectedValue}, `;
+            }
+            if (propName === "iconSize") { 
+              field += `iconSize: GSSizes.$${selectedValue}, `;
+            }
+            if (propName === "spinnerSize") {
+              field += `spinnerSize: GSSpinnerSizes.${selectedValue}, `;
+            }
+            if (propName === "isBlockButton") {
+              field += `isBlockButton: ${selectedValue}, `;
+            }
+          }
+          if(item['elementInfo']['label']){
+            field += `buttonText:'${item['elementInfo']['label']}',` ;
+          }
+          if (data['uo'].length > 0) {
+            data['uo'].forEach(artifact => {
+              const groupName = artifact['nodeName'];
+              artifact['objElements'].forEach(element => {
+                if(item['id'] === element['elementId']){
+                  const events = element['events'];
+                  if (events?.eventSummary?.type === 'button') {
+                    events.eventSummary.children.forEach(eventNode => {
+                      if (eventNode.type === 'eventNode' && eventNode.name === 'onPressed') {
+                        eventNode.children.forEach(handlerNode => {
+                          if (handlerNode.type === 'handlerNode' && handlerNode.name === 'saveHandler') {
+                            if(handlerNode.children.length > 0){
+                               handlerNode.children.forEach(childNode => {
+                              if(childNode.type === 'handlerNode' && childNode.name === 'infoMsg'){
+                                field += `onPressed: (){ _handleSave('${data1}','${groupName}','${item['elementInfo']['label']}','${childNode.hlr.params.message}', '${childNode.hlr.params.type}',}); } ,`;
+                              }
+                            });
+                            }else{
+                              field += `onPressed: (){ _handleSave('${data1}','${groupName}','${item['elementInfo']['label']}','Record Saved Successfully', 's',${item['elementInfo']['label'].toLowerCase()}); },`;
+                            }
+                            handler.push('handleSave');
+                          }
+                          if (handlerNode.type === 'handlerNode' && handlerNode.name === 'updateHandler') {
+                            if(handlerNode.children.length > 0){
+                              handlerNode.children.forEach(childNode => {
+                                if(childNode.type === 'handlerNode' && childNode.name === 'infoMsg'){
+                                  field += `onPressed: (){   _handleUpdate('${data1}','${groupName}','${item['elementInfo']['label']}', dataList,'${childNode.hlr.params.message}', '${childNode.hlr.params.type}',${item['elementInfo']['label'].toLowerCase()}); } ,`;
+                                }
+                              })
+                            }else{
+                              field += `onPressed: (){ _handleUpdate('${data1}','${groupName}','${item['elementInfo']['label']}', dataList, 'Record Updated Successfully','s',${item['elementInfo']['label'].toLowerCase()}); } ,`;
+                            }
+                            handler.push('handleUpdate');
+                          }
+                        });
+                      }
+                    });
+                  }
+                }
+              });
+            });
+          }
+          field += `),),`;
+        break;
+        case 'textinput':
+          field = `GInput(`;
+          let isRequired = false;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "size") {
+              field += `size: GSInputSizes.$${selectedValue}, `;
+            }
+            if (propName === "variant") {
+              field += `variant: GSInputVariants.${selectedValue}, `;
+            }
+            if (propName === "isDisabled") {
+              field += `isDisabled: ${selectedValue}, `;
+            }
+            if (propName === "isPassword" ) {
+              field += `isPassword: ${selectedValue}, `;
+            }
+            if (propName === "maxLength" && parseInt(item['elementInfo']['props'][i]['value'])) {
+              field += `maxLength: ${parseInt(item['elementInfo']['props'][i]['value'])}, `;
+            }
+            if (propName === "inputType" ) {
+              field += `keyboardType: TextInputType.${selectedValue}, `;
+              if(selectedValue != undefined && selectedValue != []){
+                  if(selectedValue[0] === 'emailAddress'){
+                     field += `validator: (val) { 
+                      if (val != null && val.isNotEmpty) { 
+                        if (RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(val)) {
+                          return ''; 
+                        } else { 
+                          return 'Enter a valid email'; 
+                        }
+                      } 
+                      else { 
+                        return 'Enter a valid input'; 
+                      }
+                    },`;
+                  } else if(selectedValue[0] === 'phone'){
+                    field += `validator: (val) { 
+                      if (val != null && val.isNotEmpty) { 
+                        if (RegExp(r'^[0-9]{10}$').hasMatch(val)) {
+                          return ''; 
+                        } else { 
+                          return 'Enter a valid mobile number'; 
+                        }
+                      } 
+                      else { 
+                        return 'Enter a valid input'; 
+                      }
+                    },`;
+                  } else if(selectedValue[0] === 'name'){
+                    field += `validator: (val) { 
+                      if (val != null && val.isNotEmpty) { 
+                        if (RegExp(r'^[a-zA-Z]+$').hasMatch(val)) {
+                          return ''; 
+                        } else { 
+                          return 'Enter only alphabetic characters'; 
+                        }
+                      } 
+                      else { 
+                        return 'Enter a valid input'; 
+                      }
+                    },`;
+                  } else if(selectedValue[0] === 'number'){
+                    field += `validator: (val) { 
+                      if (val != null && val.isNotEmpty) { 
+                        if (RegExp(r'^[0-9]+$').hasMatch(val)) {
+                          return ''; 
+                        } else { 
+                          return 'Enter only numeric digits'; 
+                        }
+                      } 
+                      else { 
+                        return 'Enter a valid input'; 
+                      }
+                    },`;
+                  } else{
+                    field += `validator: (val) { if (val != null && val.isNotEmpty) { return ''; } else { return 'Enter a valid input';}},`;
+                  }
+                } else{
+                    field += `validator: (val) { if (val != null && val.isNotEmpty) { return ''; } else { return 'Enter a valid input';}},`;
+                }
+            }
+            if (propName === "textAlign") {              
+              field += `textAlign: TextAlign.${selectedValue}, `;
+            }
+            if (propName === "textAlignVertical") {
+              field += `textAlignVertical: TextAlignVertical.${selectedValue}, `;
+            }
+            if (propName === "showCursor") {
+              field += `showCursor: ${selectedValue}, `;
+            }
+            if (propName === "textCapitalization") {
+              field += `textCapitalization: TextCapitalization.${selectedValue}, `;
+            }
+            if (propName === "prefix" && item['elementInfo']['props'][i]['value']) {
+              field += `prefix: const Icon(Icons.${item['elementInfo']['props'][i]['value']}), `;
+            }
+            if (propName === "isRequired") {
+              if(selectedValue[0] === 'true'){
+                isRequired = true;
+                requiredFields.push(item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase());
+              }
+            }
+          }
+          if(item['elementInfo']['label']){
+            field += `hintText: 'Enter ${item['elementInfo']['label']}${isRequired ? '*' : '' }',`;
+            field += `controller: ${item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase()},`;
+          }
+          field += `),`;
+          formData.push(item['elementInfo']['label'].toString().replace(/\s+/g, ''));
+        break;
+        case 'checkbox':
+          field = `GCheckbox(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "size") {
+              field += `size: GSCheckBoxSizes.$${selectedValue}, `;
+            }
+            if (propName === "isDisabled") {
+              field += `isDisabled: ${selectedValue}, `;
+            }
+            if (propName === "isInvalid") {
+              field += `isInvalid: ${selectedValue}, `;
+            }
+          }
+          if(item['elementInfo']['label']){
+            selectedCheckBoxValues.push(item['elementInfo']['label']);
+          }
+          field += `),`;
+        break;
+        case 'textarea':
+          field = `GTextArea(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === 'size') {
+              field += `size: GSTextAreaSizes.$${selectedValue}, `;
+            }
+            if (propName === 'isDisabled') {
+              field += `isDisabled: ${selectedValue}, `;
+            }
+            if (propName === "maxLength" && parseInt(item['elementInfo']['props'][i]['value'])) {
+              field += `maxLength: ${parseInt(item['elementInfo']['props'][i]['value'])}, `;
+            }
+            if (propName === "inputType") {
+              field += `keyboardType: TextInputType.${selectedValue}, `;
+            }
+            if (propName === "maxLines" && parseInt(item['elementInfo']['props'][i]['value'])) {
+              field += `maxLines: ${parseInt(item['elementInfo']['props'][i]['value'])}, `;
+            }
+            if (propName === "textAlign") {
+              field += `textAlign: TextAlign.${selectedValue}, `;
+            }
+            if (propName === "textAlignVertical") {
+              field += `textAlignVertical: TextAlignVertical.${selectedValue}, `;
+            }
+            if (propName === "showCursor") {
+              field += `showCursor: ${selectedValue}, `;
+            }
+            if (propName === "textCapitalization") {
+              field += `textCapitalization: TextCapitalization.${selectedValue}, `;
+            }
+            if (propName === "helperText" && item['elementInfo']['props'][i]['value']) {
+              field += `helperText: ${[item['elementInfo']['props'][i]['value']]}, `;
+            }
+            if (propName === "prefix" && item['elementInfo']['props'][i]['value']) {
+              field += `prefix: ${[item['elementInfo']['props'][i]['value']]}, `;
+            }
+            if (propName === "suffix" && item['elementInfo']['props'][i]['value']) {
+              field += `suffix: ${[item['elementInfo']['props'][i]['value']]}, `;
+            }
+          }
+          field += `),`;
+          formData.push(item['elementInfo']['label'].toString().replace(/\s+/g, ''));
+        break;
+        case 'text':
+          field = `GText(`; 
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "text" && item['elementInfo']['props'][i]['value'] ) {
+              field +=`text: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "size") {
+              field += `size: GSSizes.$${selectedValue}, `;
+            }
+            if (propName === "letterSpacing" && item['elementInfo']['props'][i]['value']) {
+              field += `letterSpacing: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "overflow" ) {
+              field += `overflow: ${selectedValue},`;
+            }
+            if (propName === "textAlign") {
+              field += `textAlign: ${selectedValue},`;
+            }
+            if (propName === "textDirection" ) {
+              field += `textDirection: ${selectedValue},`;
+            }
+            if (propName === "bold" ) {
+              field += `bold: ${selectedValue},`;
+            }
+            if (propName === "highlight") {
+              field += `highlight: ${selectedValue},`;
+            }
+            if (propName === "isTruncated" ) {
+              field += `isTruncated: ${selectedValue},`;
+            }
+            if (propName === "italic") {
+              field += `italic: ${selectedValue},`;
+            }
+            if (propName === "strikeThrough") {
+              field += `strikeThrough: ${selectedValue},`;
+            }
+            if (propName === "underline") {
+              field += `underline: ${selectedValue},`;
+            }
+            if (propName === "textColor" && item['elementInfo']['props'][i]['value']) {
+              field += `textColor: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+          } 
+          field += `),`;
+        case 'dropdown':
+          field = `GDropdown(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            }else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "items" && item['elementInfo']['props'][i]['value']) {
+              field += `items: const [${item['elementInfo']['props'][i]['value'].split(",").map(item => `"${item}"`).join(",")}],`;
+            }
+            if (propName === "selectedValue" && item['elementInfo']['props'][i]['value']) {
+              field += `selectedValue: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "size") {
+              field += `size: DropdownSize.${selectedValue}, `;
+            }
+            if (propName === "variant") {
+              field += `variant: DropdownVariant.${selectedValue},  `;
+            } 
+          }
+          if(item['elementInfo']['label']){
+            field += `hintText: 'Select ${item['elementInfo']['label']}',`;
+            selectedDropdownValues.push(item['elementInfo']['label']);
+          }
+          if (propName === "isRequired") {
+            if(selectedValue[0] === 'true'){
+              requiredFields.push(item['type'] + '_' + item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase());
+            }
+          }
+          field += `onChanged: (value) { setState(() { ${item['elementInfo']['label']} = value; });},`;
+          field += `),`;
+          formData.push(item['type'] + '_' + item['elementInfo']['label'].toString().replace(/\s+/g, ''));
+        break;
+        case 'list':
+          field = `GList(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            } else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "showSearchBar" ) {
+              field += `showSearchBar: ${selectedValue}, `;
+            }
+            if (propName === "showSearchHistory" ) {
+             field += `showSearchHistory: ${selectedValue}, `;
+            }
+            if (propName === "showPagination" ) {
+             field += `showPagination: ${selectedValue}, `;
+            }
+            if (propName === "showItemperPageSelector" ) {
+             field += `showItemperPageSelector: ${selectedValue}, `;
+            }
+            if (propName === "searchBorderStyle" ) {
+             field += `searchBorderStyle: SearchBarBorder.${selectedValue}, `;
+            }
+            if (propName === "loaderType" ) {
+             field += `loaderType: LoaderType.${selectedValue}, `;
+            }
+          }
+          field += `key: globalListKey,`;
+          field += `connectedSource: _connectedSource,`;
+          field += `fieldsToDisplay: _labelsToDisplay,`;
+          field += `action: _actions,`;
+          field += `ufKey: '${data1}',`;
+          
+          if (data['uo'].length > 0) {
+            data['uo'].forEach(node => {
+              const groupName = node['nodeName'];
+              node['objElements'].forEach((element) => {
+                if(item['id'] === element['elementId']){
+                  field += `groupName: '${groupName}',`;
+                  field += `controlName: '${element['elementName']}',`;
+                }
+              })
+            });
+          }
+
+          field += `),`;
+        break;
+        case 'card':
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            } else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "action" ) {
+              field += `actions: '${item['elementInfo']['props'][i]['value']}', `;
+              if(item['elementInfo']['props'][i]['value'].toString()){
+                actions = item['elementInfo']['props'][i]['value'].toString();
+              }
+            }
+          }
+           if (data['uo'].length > 0) {
+            data['uo'].forEach(artifact => {
+              const groupName = artifact['nodeName'];
+              artifact['objElements'].forEach(element => {
+                if(item['id'] === element['elementId']){
+                  const events = element['events'];
+                  if (events?.eventSummary?.type === 'card') {
+                    events.eventSummary.children.forEach(eventNode => {
+                      if (eventNode.type === 'eventNode' && eventNode.name === 'onTap') {
+                        eventNode.children.forEach(handlerNode => {
+                          if (handlerNode.type === 'handlerNode' && handlerNode.name === 'riseListen') {
+                            handlerNode.children.forEach(source => {
+                              connectedSource = `${generateClassName(source.name)}()`;
+                            })
+                          }
+                        });
+                      }
+                    });
+                  }
+                }
+              });
+            });
+          }
+          defaultLabels.push(item['label']);
+        break;
+        case 'avatar':
+          field = `GAvatar(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+              propName = item['elementInfo']['props'][i]['name'];
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+              if(selectedValue && selectedValue.length > 0){
+                selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+              } else{
+                selectedValue = item['elementInfo']['props'][i]['default'];
+              }
+              if (propName === "imageUrl" && item['elementInfo']['props'][i]['value'] ) {
+                field += `imageUrl: ${item['elementInfo']['props'][i]['value']}, `;
+              }
+              if (propName === "radius" ) {
+               field += `radius: GSAvatarRadius.$${selectedValue}, `;
+              }
+              if (propName === "size" ) {
+              field += `size: GSAvatarSizes.$${selectedValue}, `;
+              }
+              if (propName === "imageType" && selectedValue != 'none' ) {
+               field += `imageType:GSImageType.${selectedValue}, `;
+              }
+              if (propName === "fontSize" ) {
+               field += `fontSize: $GSFontSize.$${selectedValue}, `;
+              }
+            }
+            field += `),`;
+          break;
+        case 'datepicker':
+          field = `GDatePicker(`;
+          for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            } else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "selectedDate" && item['elementInfo']['props'][i]['value'] ) {
+              field += `selectedDate: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "size") {
+              field += `size: DatePickerSize.${selectedValue}, `;
+            }
+            if (propName === "variant") {
+              field += `variant: DatePickerVariant.${selectedValue}, `;
+            }
+            if (propName === "dateFormat" && item['elementInfo']['props'][i]['value']) {
+              field += `variant: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+          }
+          if(item['elementInfo']['label']){
+            field += `hintText: 'Select ${item['elementInfo']['label']}',`;
+          }
+          field += `)`;
+          break;
+          case 'datepicker':
+        field = `GDatePicker(`;
+        for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            } else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "selectedDate" && item['elementInfo']['props'][i]['value'] ) {
+              field += `selectedDate: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "size" ) {
+             field += `size: DatePickerSize.$${selectedValue}, `;
+            }
+            if (propName === "variant" ) {
+             field += `variant: DatePickerVariant.$${selectedValue}, `;
+            }
+            if (propName === "dateFormat" && item['elementInfo']['props'][i]['value'] ) {
+             field += `dateFormat: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+          }
+          field += `),`;
+          break;
+          case 'timepicker':
+        field = `GTimePicker(`;
+        for (let i = 0; i < item['elementInfo']['props'].length; i++) {
+            propName = item['elementInfo']['props'][i]['name'];
+            selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            if(selectedValue && selectedValue.length > 0){
+              selectedValue = item['elementInfo']['props'][i]['enum']['selectedValue'];
+            } else{
+              selectedValue = item['elementInfo']['props'][i]['default'];
+            }
+            if (propName === "selectedTime" && item['elementInfo']['props'][i]['value'] ) {
+             field += `selectedTime: ${item['elementInfo']['props'][i]['value']}, `;
+            }
+            if (propName === "size" ) {
+             field += `size: TimePickerSize.${selectedValue}, `;
+            }
+            if (propName === "variant" ) {
+             field += `variant: TimePickerVariant.${selectedValue}, `;
+            }
+          }
+          field += `),`;
+          break;
+        default:
+          field = 'const SizedBox()';
+      }
+
+      if (item['elementInfo'].hasOwnProperty('layout') && item['type'] != 'card') {
+        let length;
+        let alignment;
+        for (let layout of item['elementInfo']['layout']) {
+          if (layout['name'] === "orientation" && layout['value']) {
+            order = parseInt(layout['value'].split('.')[0]);
+          }
+          if (layout['name'] === "length") {
+            length = layout['default'];
+          }
+          if (layout['name'] === "length" && layout['enum']['selectedValue']) {
+            length = layout['value'];
+          }
+          if (layout['name'] === 'alignment' && layout['enum']['selectedValue']) {
+            switch (layout['enum']['selectedValue'].toString()) {
+              case 'topLeft': alignment = 'topLeft'; break;
+              case 'topCenter': alignment = 'topCenter'; break;
+              case 'topRight': alignment = 'topRight'; break;
+              case 'centerLeft': alignment = 'centerLeft'; break;
+              case 'center': alignment = 'center'; break;
+              case 'centerRight': alignment = 'centerRight'; break;
+              case 'bottomLeft': alignment = 'bottomLeft'; break;
+              case 'bottomCenter': alignment = 'bottomCenter'; break;
+              case 'bottomRight': alignment = 'bottomRight'; break;
+              default: alignment = 'center';
+            }
+          } 
+        }
+        if (!rows[order]) {
+          rows[order] = [];
+        }
+      rows[order].push(`
+          Flexible(
+            flex: ${parseInt(length)},
+            child: Padding(
+              padding: EdgeInsets.all(12.0),
+                child: Align(
+                  alignment: Alignment.${alignment},
+                  child: ${field}
+                ),
+              ),
+        )`);
+      }
+    });
+  }
+  
+  const jsonObject = formData.reduce((acc, field) => { 
+    if (field.startsWith('dropdown_')) {
+      const key = field.replace('dropdown_', '');
+      acc[key] = key; 
+    } else {
+      acc[field] = `${field}.text`;
+    }
+    return acc;
+  }, {});
+_%>
+<%_ if(selectedDropdownValues.length > 0){ _%>
+  // Dropdown keys
+  <%_ selectedDropdownValues.map((dropdownKeys) => { _%>
+String? <%= dropdownKeys %>;
+  <%_ }) _%>
+<%_ } _%>
+<%_ if(selectedCheckBoxValues.length > 0){ _%>
+  // Checkbox keys
+  <%_ selectedCheckBoxValues.map((checkboxKeys) => { _%>
+bool? <%= checkboxKeys %>;
+  <%_ }) _%>
+<%_ } _%>
+<%_ if(defaultLabels.length > 0){_%>
+  final List<String> _labelsToDisplay = [<%_ defaultLabels.forEach(function(e) { %>'<%= e %>',<%_ }); %>];
+  final String _actions = '<%= actions %>';
+  final Widget _connectedSource = <%= connectedSource %>;
+<%_ } _%>
+@override
+void initState(){
+  super.initState();
+  <%_ if(defaultLabels.length> 0){_%>
+  _labelsToDisplay.removeWhere((item) => item == 'ed_id');
+  _labelsToDisplay.removeWhere((item) => item == 'email');
+  _labelsToDisplay.removeWhere((item) => item == 'phone');
+  <%_ } _%>
+  <%_ Object.keys(jsonObject).forEach((key, index) => { _%>
+      <%_ if (isNumber(jsonObject[key])) { _%> 
+  <%= jsonObject[key].replace('.text','').toLowerCase() %>.clear();
+      <%_ } else if (jsonObject[key] === 'true') { _%> 
+  <%= jsonObject[key] %>.toString().toLowerCase() == "true";
+      <%_ } else { _%>
+  <%= jsonObject[key].replace('.text','').toLowerCase() %>.clear();
+      <%_ } _%>
+      <%_ if (index < Object.keys(jsonObject).length - 1) { _%><%_ } _%>
+  <%_ })  _%>
+}
+
+@override
+Widget build(BuildContext context) {
+  final dataList = Provider.of<DataModel>(context).dataList;
+  <%_ if(!handler.includes('handleSave')){ _%>
+     if (dataList.isNotEmpty) {
+    <%_ Object.keys(jsonObject).forEach((key, index) => { _%>
+      <%= jsonObject[key].toLowerCase() %> = 
+      <%_ if (isNumber(jsonObject[key])) { _%> 
+        dataList[0]['<%= key.toLowerCase() %>'] != null ? dataList[0]['<%= key.toLowerCase() %>'].toString() : ''
+      <%_ } else if (jsonObject[key] === 'true') { _%> 
+        dataList[0]['<%= key %>'].toString().toLowerCase() == "true"
+      <%_ } else { _%>
+        dataList[0]['<%= key.toLowerCase() %>'] != null ? dataList[0]['<%= key.toLowerCase() %>'].toString() : ''
+      <%_ } _%>
+      ;
+    <%_ })  _%>
+  }
+  <%_ } _%>
+  return Scaffold(
+    <%_ if(data['ufs'].toString()){ _%>
+      <%_ data['ufs'].forEach((e) => { _%>
+        <%_ if (e['type'] === 'appbar') { _%>
+    appBar: GAppBar(
+      title: '<%= e['label'] %>',
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.language),
+        ),
+        IconButton(
+          onPressed: () {
+            UserSecureStorage.delToken(UserSecureStorage.tokenKey.toString());
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (context) => const TenantLogin(),
+            ));
+          },
+          icon: const Icon(Icons.logout),
+        )
+      ],
+    ),
+        <%_ } _%>
+      <%_ }) _%>
+    <%_ } _%>
+    body: PopScope(
+      onPopInvokedWithResult: (canPop, result) {
+        if (canPop) {
+          Provider.of<DataModel>(context, listen: false).clearData();
+        }
+      },
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: VStack(
+          children: <Widget>[
+          <%_ Object.keys(rows).sort((a, b) => a - b).forEach(row => { _%>
+            HStack(
+              children: [
+                  <%= rows[row].join(',\n') %>
+              ],
+            ),
+          <%_ }); _%>
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+<%_ if(Object.keys(jsonObject).length > 0 && handler.includes('handleSave')){ _%>
+  // SAVE HANDLER
+  void _handleSave(String ufKey, String groupName, String controlName, String message, String type, bool loader) async{
+   setState((){
+  <%_ data['ufs'].forEach((item, index)=> { _%>
+    <%_ if(item['type'] === 'button') { _%>  
+    <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = true;
+    <%_ } _%>
+  <%_}) _%>
+   });
+    FocusScope.of(context).requestFocus(FocusNode());
+    final formData = <String, dynamic>{
+      <%_ Object.keys(jsonObject).forEach((key,index) => { _%>
+      "<%= key %>":<%_ if(key === 'totalcost'){ _%> int.tryParse(<%= jsonObject[key] %>) ?? 0,
+      <%_ } else { _%>
+        <%= jsonObject[key].toLowerCase() %>,
+      <%_ } _%>
+      <%_ if (index < Object.keys(jsonObject).length - 1) { _%><%_ } _%>
+    <%_ })  _%>
+    };
+    if(
+    <%_ requiredFields.map((field,index) => { _%>
+      <%_ let fieldName; 
+        if (field.startsWith('dropdown_')) {
+          fieldName = field.replace('dropdown_', '');
+        } else {
+          fieldName = `${field}.text`;
+        } 
+      _%>
+      <%= fieldName %> != ''<% if (index < requiredFields.length - 1) { %> && <% } %>
+    <%_ }) _%>
+    ){
+    String? dfkey;
+    try {
+        final response = await http.get(
+          Uri.parse(Constants.ufKeyDetails + ufKey),
+          headers: {'Content-Type': 'application/json'},
+        );
+        if (response.statusCode == 200) {
+          setState(() {
+            dfkey = jsonDecode(response.body)[0];
+          });
+          final ufPFDetails = await http.post(
+            Uri.parse(Constants.getPFDetails),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode({
+              "key": ufKey,
+              "groupName": groupName,
+              "controlName": controlName
+            }),
+          );
+          if (ufPFDetails.statusCode == 201) {
+            final pfDetails = jsonDecode(ufPFDetails.body);
+            final pfkey = pfDetails['key'];
+            final url = pfDetails['url'];
+            final primaryKey = pfDetails['primaryKey'];
+            final ufInitiatePF = await http.post(
+              Uri.parse(Constants.initiatePFDetails),
+              headers: <String, String>{
+                'Content-Type': 'application/json; charset=UTF-8',
+              },
+              body: jsonEncode({
+                "key": pfkey,
+              }),
+            );
+            if (ufInitiatePF.statusCode == 201) {
+              final initiatePF = jsonDecode(ufInitiatePF.body);
+              final eventData = {
+                "status": initiatePF['eventProperty']['sourceStatus'],
+                "created_by": "test",
+                "modified_by": "test"
+              };
+              final nodeProperty = initiatePF['nodeProperty'];
+              final ifo = await http.post(Uri.parse(Constants.getIFODetails),
+                  headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                  },
+                  body: jsonEncode({
+                    'formData': formData,
+                    'key': pfkey.toString(),
+                    'controlName': controlName
+                  }));
+              if (ifo.statusCode == 201) {
+                final ifoData = jsonDecode(ifo.body);
+                // ignore: use_build_context_synchronously
+                Provider.of<DataModel>(context, listen: false)
+                    .setIFO('ifo', jsonDecode(ifo.body));
+                final Map<String, dynamic> saveData = {
+                  ...nodeProperty,
+                  "data": {...ifoData, ...eventData},
+                  "event":
+                      initiatePF['eventProperty']['sourceStatus'].toString(),
+                  "url": url.toString(),
+                  "upId": ""
+                };
+                final token = await UserSecureStorage.getToken(
+                    UserSecureStorage.tokenKey);
+                final savehandler = await http.post(
+                    Uri.parse(Constants.handleSave),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer $token'
+                    },
+                    body: jsonEncode(saveData));
+                if (savehandler.statusCode == 201) {
+                  final Map<String, dynamic> updateData = {
+                    "data": [
+                      {
+                        "status": jsonDecode(savehandler.body)['event'] ?? '',
+                        "modified_by": "test",
+                        "process_id": jsonDecode(savehandler.body)['upId'] ?? ''
+                      }
+                    ],
+                    "key": dfkey,
+                    "upId": jsonDecode(savehandler.body)['upId'] ?? '',
+                    "tableName": pfDetails['url'].toString().split('/')[3],
+                    "primaryKey": [
+                      jsonDecode(savehandler.body)['insertedData'][primaryKey]
+                    ],
+                    "url": dotenv.env['EXPENSESDETAILS_URL'] ?? '',
+                  };
+                  final updateResponse = await http.post(
+                    Uri.parse(Constants.handleUpdate),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
+                      'Authorization': 'Bearer $token'
+                    },
+                    body: jsonEncode(updateData),
+                  );
+                  if (updateResponse.statusCode == 201) {
+                    Common.flutterToaster(message, type.toLowerCase());
+                     <%_ Object.keys(jsonObject).forEach((key, index) => { _%>
+                        <%_ if (isNumber(jsonObject[key])) { _%> 
+                          <%= jsonObject[key].replace('.text','').toLowerCase() %>.clear();
+                        <%_ } else if (jsonObject[key] === 'true') { _%> 
+                          <%= jsonObject[key] %>.toString().toLowerCase() == "true"
+                        <%_ } else { _%>
+                          <%= jsonObject[key].replace('.text','').toLowerCase() %>.clear();
+                        <%_ } _%>
+                        <%_ if (index < Object.keys(jsonObject).length - 1) { _%><%_ } _%>
+                    <%_ })  _%>
+                  } else {
+                    Common.flutterToaster(
+                        jsonDecode(updateResponse.body)['errorDetails']
+                          ['message'] ??'Failed to Update Status','F');
+                  }
+                } else {
+                  Common.flutterToaster(
+                      jsonDecode(savehandler.body)['errorDetails']
+                          ['errorDetail'] ??'Failed to Save','F');
+                }
+              } else {
+                Common.flutterToaster(
+                    jsonDecode(ifo.body)['errorDetails']['message'] ??
+                        'Failed to Get IFO Details ','F');
+              }
+            } else {
+              Common.flutterToaster(
+                  jsonDecode(ufInitiatePF.body)['errorDetails']['message'] ??
+                      'Failed to Initiate PF','F');
+            }
+          } else {
+            Common.flutterToaster(
+                jsonDecode(ufPFDetails.body)['errorDetails']['message'] ??
+                    'Failed to Get PF Details','F');
+          }
+        } else {
+          Common.flutterToaster('Error getting DF key', 'E');
+        }
+      } catch (e) {
+        Common.flutterToaster('Something went wrong', 'F');
+      } finally {
+        setState((){
+        <%_ data['ufs'].forEach((item, index)=> { _%>
+          <%_ if(item['type'] === 'button') { _%>  
+        <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = false;
+          <%_ } _%>
+        <%_}) _%>
+         });
+      }
+  } else{
+    Common.flutterToaster('Please fill all required fields', 'F');
+     setState((){
+    <%_ data['ufs'].forEach((item, index)=> { _%>
+      <%_ if(item['type'] === 'button') { _%>  
+    <%= item['elementInfo']['label'].toString().replace(/\s+/g, '').toLowerCase() %> = false;
+      <%_ } _%>
+    <%_}) _%>
+    });
+  }
+}
+<%_ }_%>
+
+
+<%_ if(handler.includes('handleUpdate')){ _%>
+  // UPDATE HANDLER
+  void _handleUpdate(String ufKey, String groupName, String controlName,
+      List<dynamic> dataList, String message, String type, bool loader) async {
+    List<String> processIds = [];
+    List<int> primaryKeys = [];
+    final lockDetails = Provider.of<DataModel>(context, listen: false)
+        .getLockDetail('lockDetails');
+    if (dataList.isNotEmpty) {
+      for (var i = 0; i < dataList.length; i++) {
+        processIds.add(dataList[i]['process_id']);
+      }
+    }
+    try {
+      String? dfkey;
+      final token =
+          await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+      final response = await http.get(
+        Uri.parse(Constants.ufKeyDetails + ufKey),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          dfkey = jsonDecode(response.body)[0];
+        });
+        final ufPFDetails = await http.post(
+          Uri.parse(Constants.getPFDetails),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            "key": ufKey,
+            "groupName": groupName,
+            "controlName": controlName
+          }),
+        );
+        if (ufPFDetails.statusCode == 201) {
+          final pfDetails = jsonDecode(ufPFDetails.body);
+          final pfkey = pfDetails['key'];
+          final url = pfDetails['url'];
+          final primaryKey = pfDetails['primaryKey'];
+          final ufInitiatePF = await http.post(
+            Uri.parse(Constants.initiatePFDetails),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode({
+              "key": pfkey,
+            }),
+          );
+          if (ufInitiatePF.statusCode == 201) {
+            final nodeProperty =
+                  jsonDecode(ufInitiatePF.body)['nodeProperty'];
+              // Event Emitter
+              final Map<String, dynamic> eventEmitterBody = {
+                ...nodeProperty,
+                "data": {
+                  "value": jsonDecode(ufPFDetails.body)['status'].toString()
+                },
+                "upId": processIds,
+                "event": jsonDecode(ufInitiatePF.body)['eventProperty']
+                    ['sourceStatus']
+              };
+              final eventEmitter = await http.post(
+                Uri.parse(Constants.eventEmitter),
+                headers: <String, String>{
+                  'Content-Type': 'application/json; charset=UTF-8',
+                  'Authorization': 'Bearer $token'
+                },
+                body: jsonEncode(eventEmitterBody),
+              );
+              if (eventEmitter.statusCode == 201) {
+                if (dataList.isNotEmpty) {
+                  for (var i = 0; i < dataList.length; i++) {
+                    primaryKeys.add(dataList[i][primaryKey]);
+                  }
+                }
+                 // handle update
+                for (var j = 0; j < processIds.length; j++) {
+                  final updateResponse = await http.post(
+                      Uri.parse(Constants.handleUpdate),
+                      headers: <String, String>{
+                        'Content-Type': 'application/json; charset=UTF-8',
+                        'Authorization': 'Bearer $token'
+                      },
+                      body: jsonEncode({
+                        "lockDetails": {"ttl": int.parse(lockDetails['ttl'])},
+                        "data": [
+                          {
+                            "status":
+                                jsonDecode(ufPFDetails.body)['status'].toString(),
+                            'modified_by': 'test'
+                          }
+                        ],
+                        "key": dfkey,
+                        "upId": processIds[j].toString(),
+                        "tableName": jsonDecode(ufPFDetails.body)['tableName'],
+                        "primaryKey": [primaryKeys[j]],
+                        "url": dotenv.env['EXPENSESDETAILS_URL'] ?? ''
+                      }));
+                  if (updateResponse.statusCode == 201) {
+                    Common.flutterToaster(message, type.toLowerCase());
+                  } else {
+                    Common.flutterToaster('Failed to update', 'F');
+                  }
+                }
+                if (globalListKey.currentState != null) {
+                  setState(() {
+                    globalListKey.currentState!.clearItems();
+                  });
+                } else {
+                  Navigator.of(context).pop();
+                }
+              } else {
+                Common.flutterToaster(
+                    jsonDecode(eventEmitter.body)['errorDetails']
+                            ['errorDetail'] ??
+                        'Failed to trigger a event',
+                    'F');
+              }
+          } else {
+            Common.flutterToaster(
+                jsonDecode(ufInitiatePF.body)['errorDetails']['message'] ??
+                    'Failed to Initiate PF',
+                'F');
+          }
+        } else {
+          Common.flutterToaster(
+              jsonDecode(ufPFDetails.body)['errorDetails']['message'] ??
+                  'Failed to Get PF Details',
+              'F');
+        }
+      } else {
+        Common.flutterToaster('Error getting DF key', 'E');
+      }
+    } catch (e) {
+      Common.flutterToaster('Something went wrong', 'F');
+    } 
+  }
+<%_ } _%>
+}

@@ -1,0 +1,13 @@
+<%_ let tables = data _%>  
+import { HttpStatus, Module } from '@nestjs/common';
+<%_ tables.forEach((table) => {_%>
+import { <%= table.entities.Entity %>Module } from './<%= table.entities.Entity %>/<%= table.entities.Entity %>.module';   
+<%})%>
+import { codeDescriptionModule } from './codeDescription/codeDescription.module'; 
+
+
+@Module({
+  imports: [<%_ for (let i=0; i < tables.length; i++) { _%><%= tables[i].entities.Entity %>Module<%_ if (i !== tables.length-1) { _%>,<% }} %>,codeDescriptionModule],
+  controllers:[],
+})
+export class AppModule {}

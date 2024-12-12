@@ -1,0 +1,79 @@
+import 'package:flutter/material.dart';
+import '../../../exports.dart';
+
+class <%= relation[0] %> extends StatefulWidget {
+  final List<Map<String, String>>? dataList;
+
+  const <%= relation[0] %>({super.key, this.dataList = const []});
+
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  final List<String> _columns = [<%_ relation[2].map((col)=> { _%>'<%= col %>', <%_ }) _%>];
+    
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Map<String, dynamic>> dataList = [];
+    List<DataColumn> columns = _columns.map((col) {
+      return DataColumn(
+        label: Text(col),
+      );
+    }).toList();
+
+    // columns.add(const DataColumn(label: Text('Action')));
+    setState(() {
+      dataList = Provider.of<DataModel>(context, listen: true).tableData;
+    });
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          DataTable(
+            columns: columns,
+            rows: dataList.isEmpty
+                ? []
+                : dataList.asMap().entries.map((entry) {
+                    var data = entry.value;
+
+                    List<DataCell> cells = [];
+                    for (var col in _columns) {
+                      cells.add(DataCell(Text(data[col].toString())));
+                    }
+
+                    // cells.add(DataCell(
+                    //   IconButton(
+                    //     icon: const Icon(Icons.delete, color: Colors.red),
+                    //     onPressed: () {},
+                    //   ),
+                    // ));
+
+                    return DataRow(cells: cells);
+                  }).toList(),
+          ),
+          if (dataList.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(
+                child: Text(
+                  'No Data Found',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "bg": "#000000",
+  "bgCard": "#232323",
+  "border": "#25272C",
+  "borderLine": "#E5E9EB",
+  "text": "#FFFFFF",
+  "clipPathText": "#000000",
+  "textOpacity/15": "#FFFFFF26",
+  "textOpacity/35": "#567a99",
+  "textOpacity/50": "#FFFFFF80",
+  "opacity": "0.35",
+  "profileColor": "#0736C426",
+  "name":"Midnight"
+}

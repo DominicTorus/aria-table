@@ -1,0 +1,213 @@
+'use client'
+<%_ let compDetails = data _%>
+<%_ let nodes = relation _%>
+<%_ let keys = data1[0] _%>
+<%_ let compDetailLabel = data2 _%>
+<%_ let ufKey = data1[0].ufKey _%>
+<%_ let pfKey = data1[0].pfKey _%>
+<%_ let sfKey = data1[0].sfKey _%>
+<%_ let stateAndSetStatePre =data1[3] _%>
+<%_ let eventDetailsArray = data1[1] _%>
+<%_ let eventDetailsObj = data1[2] _%>
+import React,{ useEffect, useState,useContext } from 'react'
+import { Grid } from "@gravity-ui/page-constructor";
+import { AxiosService } from '@/app/components/axiosService'
+import { uf_authorizationCheckDto } from '@/app/interfaces/interfaces';
+import { codeExecution } from '@/app/utils/codeExecution';
+<%_ if(compDetails.isTable){ _%>
+import Table<%= compDetails.label  %>  from './Table<%= compDetails.label %>';  
+  <%_ } _%>
+<%_ for (let i = 0; i < compDetails.controls.length; i++) { _%>
+<%_ for(let j = 0;j < nodes.length;j++) { _%> 
+<%_ if ( compDetails.controls[i] === nodes[j].id && nodes[j].type !== 'group') { _%>
+<%_ if ( nodes[j].elementInfo.component === 'Avatar') { _%>
+import Avatar<%= nodes[j].label  %>  from "./Avatar<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Button') { _%>
+import Button<%= nodes[j].label  %>  from "./Button<%= nodes[j].label  %>";
+<%_ } _%>
+<%_ if ( nodes[j].elementInfo.component === 'Card') { _%>
+import Card<%= nodes[j].label  %>  from "./Card<%= nodes[j].label  %>";
+<%_ } _%>
+<%_ if ( nodes[j].elementInfo.component === 'Checkbox') { _%>
+import CheckBox<%= nodes[j].label  %>  from "./Checkbox<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Dropdown') { _%>
+import Dropdown<%= nodes[j].label  %>  from "./Dropdown<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Icon') { _%>
+import Icon<%= nodes[j].label  %>  from "./Icon<%= nodes[j].label  %>";
+<%_ } _%>
+<%_ if ( nodes[j].elementInfo.component === 'TextInput') { _%>
+import TextInput<%= nodes[j].label  %>  from "./TextInput<%= nodes[j].label  %>";
+<%_ } _%>     
+<%_ if ( nodes[j].elementInfo.component === 'TextArea') { _%>
+import TextArea<%= nodes[j].label  %>  from "./TextArea<%= nodes[j].label  %>";
+<%_ } _%>   
+<%_ if ( nodes[j].elementInfo.component === 'List') { _%>
+import List<%= nodes[j].label  %>  from "./List<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'PinInput') { _%>
+import PinInput<%= nodes[j].label  %>  from "./PinInput<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Pagination') { _%>
+import Pagination<%= nodes[j].label  %>  from "./Pagination<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'RadioButton') { _%>
+import RadioButton<%= nodes[j].label  %>  from "./RadioButton<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'RadioGroup') { _%>
+import RadioGroup<%= nodes[j].label  %>  from "./RadioGroup<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Switch') { _%>
+import Switch<%= nodes[j].label  %>  from "./Switch<%= nodes[j].label  %>";
+<%_ } _%>
+<%_ if ( nodes[j].elementInfo.component === 'Label') { _%>
+import Label<%= nodes[j].label  %>  from "./Label<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'Progress') { _%>
+import Progress<%= nodes[j].label  %>  from "./Progress<%= nodes[j].label  %>";
+<%_ } _%> 
+<%_ if ( nodes[j].elementInfo.component === 'DatePicker') { _%>
+import DatePicker<%= nodes[j].label  %>  from "./DatePicker<%= nodes[j].label  %>";
+<%_ } _%>
+<%_ } _%>
+<%_ } _%>
+<%_ } _%>
+import { useInfoMsg } from '@/app/torusStaticHandlers/infoMsgHandler';
+import { getCookie } from "@/app/components/cookieMgment"
+import { TotalContext, TotalContextProps } from '@/app/globalContext';
+<%
+  // Define the toPascalCase function
+  function toPascalCase(str) {
+    return str
+      .toLowerCase()
+      .replace(/(?:^|\s|_)(\w)/g, (_, c) => c.toUpperCase());
+  }
+%>
+
+const <%= toPascalCase(compDetailLabel) %> = (<%_ if(keys.pfKey !== '') {_%> {lockedData,setLockedData,primaryTableData, setPrimaryTableData,/*<%_ for(let i=0;i<stateAndSetStatePre.length;i++) { _%> <%= Object.keys(stateAndSetStatePre[i])[0] %>, <%= stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]] %>,<%_} _%>*/checkToAdd,setCheckToAdd,refetch,
+  setRefetch,dropdownData,setDropdownData}:any <%_ } _%>) => {
+  const token:string = getCookie('token')
+  const [allowedComponent,setAllowedComponent]=useState<any>("")
+  const toast=useInfoMsg()
+  const baseUrl:any = process.env.NEXT_PUBLIC_API_BASE_URL;
+  <%_ for (let i = 0; i < nodes.length; i++) { _%>
+    <%_ if (nodes[i].id === nodes[i].T_parentId) { _%>
+      const {<%= nodes[i].label  %><%= nodes[i].id.slice(-5) %>, set<%= nodes[i].label %><%= nodes[i].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps
+      <%_ } _%>  
+    <%_ } _%>
+  async function securityCheck() {
+    const uf_authorizationCheckBody:uf_authorizationCheckDto={key:'<%= keys.ufKey %>',nodeId:'<%= compDetails.componentsId %>',<%_ if(compDetails.isTable){ _%> isTable : true<%_ } _%>}
+    const uf_authorizationCheck = await AxiosService.post("/UF/AuthorizationCheck",uf_authorizationCheckBody,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )  
+    if(uf_authorizationCheck?.data?.error === true){
+      toast(uf_authorizationCheck?.data?.errorDetails?.message, 'danger')
+      return
+    }
+    setAllowedComponent(uf_authorizationCheck.data)  
+
+    <%_ if(!compDetails.isTable){ _%>
+    const code = await AxiosService.post('/UF/code', {
+      key: '<%= ufKey  %>',
+      groupId: '<%= compDetails.componentsId%>'
+    })
+  
+    if (code?.data?.error == true) { 
+      //toast(code?.data?.errorDetails?.message, 'danger')
+      //return
+    }else{      
+        let codeStates: any = {}      
+          <%_ for (let i = 0; i < nodes.length; i++) { _%>
+            <%_ if (nodes[i].id === nodes[i].T_parentId) { _%>
+              codeStates['<%= nodes[i].label  %>'] = <%= nodes[i].label  %><%= nodes[i].id.slice(-5) %>; 
+              codeStates['set<%= nodes[i].label %>'] = set<%= nodes[i].label %><%= nodes[i].id.slice(-5) %>
+              <%_ } _%>  
+            <%_ } _%>
+   
+        codeExecution(code.data,codeStates)
+    }
+  <%_ } _%>  
+  }
+  useEffect(() => {    
+    securityCheck()   
+  }, [])
+  return (
+  <%_ let columnStart = compDetails.grid.columnStart  _%>  
+  <%_ let columnEnd = compDetails.grid.columnEnd  _%>
+  <%_ let rowStart = compDetails.grid.rowStart  _%>
+  <%_ let rowEnd = compDetails.grid.rowEnd  _%>
+  <%_ let gap = compDetails.grid.gap  _%>
+    <div className="col-start-<%= columnStart %> col-end-<%= columnEnd %> row-start-<%= rowStart %> row-end-<%= rowEnd %> gap-<%= gap %> bg-gray-100">
+      <Grid containerClass='grid grid-cols-12 gap-2 '>
+        <%_ if(compDetails.isTable){ _%>
+        {allowedComponent.includes("<%= compDetails.label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Table<%= compDetails.label  %> lockedData={lockedData} setLockedData={setLockedData}  primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData}  refetch={refetch} setRefetch={setRefetch}  />: <div></div>}
+        <%_ } _%>
+      <%_ for (let i = 0; i < compDetails.controls.length; i++) { _%>      
+      <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+        <%_ if ( compDetails.controls[i] === nodes[j].id && nodes[j].type !== 'group') { _%>      
+        <%_ if ( nodes[j].elementInfo.component === 'Button') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")||  allowedComponent.includes("ALL")  ? <Button<%= nodes[j].label  %>  /* <%_ for(let i=0;i<stateAndSetStatePre.length;i++) { _%>  <%= ' '+Object.keys(stateAndSetStatePre[i])[0] %>={<%= ' '+Object.keys(stateAndSetStatePre[i])[0] %>} <%= ' '+stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]] %>={<%= stateAndSetStatePre[i][Object.keys(stateAndSetStatePre[i])[0]] %>}<%_} _%> */lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch}<%_ if(keys !== '') {_%><%_ } _%> /> : <div></div>}          
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'TextInput') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <TextInput<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'TextArea') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <TextArea<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd}/> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Dropdown') { _%>
+          {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <Dropdown<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} lockedData ={lockedData} setLockedData={setLockedData} dropdownData={dropdownData} setDropdownData={setDropdownData}  /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'List') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <List<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'PinInput') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <PinInput<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Pagination') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <Pagination<%= nodes[j].label  %>   /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'RadioButton') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <RadioButton<%= nodes[j].label  %>  /* <%= nodes[j].id.slice(-5) %> */  checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd}  /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'RadioGroup') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <RadioGroup<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Switch') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Switch<%= nodes[j].label  %>  /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd}  /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Avatar') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Avatar<%= nodes[j].label  %>  /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Icon') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Icon<%= nodes[j].label  %>   /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Label') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Label<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Progress') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL") ? <Progress<%= nodes[j].label  %>   /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Card') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <Card<%= nodes[j].label  %>  /* <%= nodes[j].id.slice(-5) %> */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd}  /> : <div></div>}
+        <%_ } _%>
+        <%_ if ( nodes[j].elementInfo.component === 'Checkbox') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <CheckBox<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+      <%_ } _%>
+      <%_ if ( nodes[j].elementInfo.component === 'DatePicker') { _%>
+        {allowedComponent.includes("<%= nodes[j].label.toLowerCase()  %>")|| allowedComponent.includes("ALL")  ? <DatePicker<%= nodes[j].label  %>   /* <%= nodes[j].id.slice(-5) %> */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} /> : <div></div>}
+      <%_ } _%>
+      <%_ } _%>
+      <%_ } _%>
+      <%_ } _%>
+      </Grid>
+    </div>             
+  )
+}
+
+export default <%= toPascalCase(compDetailLabel) %>

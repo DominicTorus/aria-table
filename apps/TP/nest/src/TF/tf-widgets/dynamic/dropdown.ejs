@@ -1,0 +1,238 @@
+<%_ let propName; _%>
+<%_ let selectedValue; _%>
+<%_ let ufKey = relation[1] _%>
+<%_ let groupName = data1[1] _%>
+<%_ let controlName = data1[2] _%>
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../../exports.dart';
+ 
+class <%= relation[0] %> extends StatefulWidget {
+  final String category;
+  final String hintText;
+  final String? selectedValue;
+  final DropdownSize size;
+  final DropdownVariant variant;
+  final Function(String?)? onChanged;
+ 
+  const <%= relation[0] %>({
+    super.key,
+    this.onChanged,
+    <%_ if(data.elementInfo.props){ _%>
+      <%_ data.elementInfo.props.forEach(prop => { _%>
+        <%_
+          propName = prop.name;
+          selectedValue = prop.enum.selectedValue;
+          if(selectedValue && selectedValue.length > 0){
+            selectedValue = prop.enum.selectedValue;
+          } else{
+            selectedValue = prop.default;
+          }
+        _%>
+        <%_ if (propName === "selectedValue") { _%>
+          this.selectedValue<%_ if(prop.value){ _%> ='<%= prop.value %>'<%_ } _%>,
+        <%_ } _%>
+        <%_ if (propName === "size") { _%>
+          this.size = DropdownSize.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "variant") { _%>
+          this.variant = DropdownVariant.<%= selectedValue %>,
+        <%_ } _%>
+        <%_ if (propName === "filterprops" ) { _%>
+          this.category<%_ if(prop.category){ _%> = '<%= prop.category _%>'
+          <%_ } _%>,
+        <%_ } _%>
+      <%_ }) _%>
+      <%_ if(data.label){ _%>
+        this.hintText = '<%= data.label %>',
+      <%_ } _%>
+    <%_ } _%>
+  });
+ 
+  @override
+  State<<%= relation[0] %>> createState() => _<%= relation[0] %>State();
+}
+ 
+class _<%= relation[0] %>State extends State<<%= relation[0] %>> {
+  List<String> items = [];
+  String? _selectedValue;
+  String? dfkey;
+ 
+  @override
+  void initState() {
+    super.initState();
+    _selectedValue = widget.selectedValue;
+    _dropData();
+  }
+ 
+  Future<void> _dropData() async {
+    await getMapperDetails();
+  }
+ 
+  Future<void> getDFkey(String ufKey) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Constants.ufKeyDetails}<%= ufKey %>'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          dfkey = jsonDecode(response.body)[0];
+        });
+        await getDF(dfkey ?? '');
+      } else {
+        Common.flutterToaster(
+            'Error getting DF key: ${response.statusCode} - ${response.body}',
+            'E');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error fetching DF key: ${e.toString()}', 'E');
+    }
+  }
+ 
+  Future<void> getDF(String dfkey) async {
+    final token = await UserSecureStorage.getToken(UserSecureStorage.tokenKey);
+    try {
+      final response = await http.post(
+        Uri.parse(Constants.getDFDetails),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: jsonEncode({"key": dfkey}),
+      );
+      if (response.statusCode == 201) {
+        await getMapperDetails();
+      } else {
+        Common.flutterToaster(
+            'Error getting DF: ${response.statusCode} - ${response.body}', 'E');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error getting DF key', 'E');
+    }
+  }
+ 
+  Future<void> getMapperDetails() async {
+    try {
+      final response = await http.post(
+        Uri.parse(Constants.getMapperDetails),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "ufkey": '<%= ufKey %>',
+          "componentName": '<%= groupName %>',
+          "controlName": '<%= controlName %>',
+          "category" : widget.category.toString(),
+        }),
+      );
+      if (response.statusCode == 201) {
+        final dropdownData = jsonDecode(response.body);
+        if (dropdownData is List) {
+          List<String> dropdownItems =
+              List<String>.from(dropdownData.map((item) => item.toString()));
+          setState(() {
+            items = dropdownItems;
+          });
+        } else {
+          Common.flutterToaster('Invalid dropdown data', 'E');
+        }
+      } else {
+        Common.flutterToaster(
+            'Error getting DF: ${response.statusCode} - ${response.body}', 'E');
+      }
+    } catch (e) {
+      Common.flutterToaster('Error getting DF key', 'E');
+    }
+  }
+ 
+  void _onChanged(String? newValue) {
+    setState(() {
+      _selectedValue = newValue;
+    });
+    if (widget.onChanged != null) {
+      widget.onChanged!(newValue);
+    }
+  }
+ 
+  @override
+  Widget build(BuildContext context) {
+    double height = 20;
+    double padding;
+    double fontSize;
+ 
+    switch (widget.size) {
+      case DropdownSize.xl:
+        padding = 20.0;
+        fontSize = 18.0;
+        height = 50;
+        break;
+      case DropdownSize.lg:
+        padding = 16.0;
+        fontSize = 16.0;
+        height = 45;
+        break;
+      case DropdownSize.md:
+        padding = 12.0;
+        fontSize = 14.0;
+        height = 40;
+        break;
+      case DropdownSize.sm:
+        padding = 8.0;
+        fontSize = 12.0;
+        height = 35;
+        break;
+    }
+ 
+    BoxDecoration getVarient() {
+      switch (widget.variant) {
+        case DropdownVariant.underlined:
+          return BoxDecoration(
+            border: const Border(
+              bottom: BorderSide(color: Colors.grey, width: 1.0),
+            ),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case DropdownVariant.outline:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+        case DropdownVariant.rounded:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(50),
+              right: Radius.circular(50),
+            ),
+          );
+        default:
+          return BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4.0),
+          );
+      }
+    }
+ 
+    return Container(
+      height: height,
+      padding: EdgeInsets.symmetric(horizontal: padding),
+      decoration: getVarient(),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedValue,
+          hint: Text(widget.hintText, style: TextStyle(fontSize: fontSize)),
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item, style: TextStyle(fontSize: fontSize)),
+            );
+          }).toList(),
+          isExpanded: true,
+          focusColor: Colors.white,
+          onChanged: _onChanged,
+        ),
+      ),
+    );
+  }
+}

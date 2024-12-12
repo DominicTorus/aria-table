@@ -1,0 +1,120 @@
+import { RedisService } from 'src/redisService';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { readAPIDTO } from './interfaces/readAPI.dto';
+import axios from 'axios';
+
+
+@Injectable()
+export class CommonService {
+  constructor(private readonly redisService: RedisService,
+    private readonly jwtService:JwtService
+  ) {}
+  private readonly logger = new Logger(CommonService.name);
+
+  
+
+  async commonErrorLogs(errdata:any,stoken:any,key:any,error:any,status:any,optnlParams?:any){  
+    // console.log("prcDetails",prcdet);
+     
+     try{
+      let sessioninfo:any = {} 
+      let commonerr:any;
+      let prcdet:any;
+      let str:any
+       if(optnlParams){
+         if(optnlParams.mode){
+           prcdet = optnlParams
+         }else{
+           commonerr = optnlParams
+         }
+       }
+       let token:any = this.jwtService.decode(stoken,{ json: true })
+      if(key){
+        str = key.split(':');
+       sessioninfo['accessDetails'] = key;
+       // sessioninfo['appGroupName'] =  str[1];
+       // sessioninfo['fabric'] =  str[3];
+      }
+       if(token){
+       sessioninfo['user'] =  token.firstName || token.preferred_username;      
+       sessioninfo['orgGrp'] =  token.orgGrp.orgGrpCode;
+       sessioninfo['org'] =   token.orgGrp.orgCode;
+       sessioninfo['roleGrp'] =  token.roleGrp.roleGrpCode;
+       sessioninfo['role'] =  token.roleGrp.roleCode;
+       sessioninfo['psGrp'] =  token.psGrp.psGrpCode;
+       sessioninfo['ps'] =  token.psGrp.psCode;
+       }else{
+         sessioninfo = commonerr
+       }    
+       let errorDetails = await this.errorobj(errdata,error,status)
+       let logs = {}
+       logs['sessionInfo'] = sessioninfo
+       logs['errorDetails'] = errorDetails   
+       if(key){
+       if(str[1] == 'PF')
+         logs['processInfo'] = prcdet
+       }
+       if(key == undefined || key == "")
+         key = 'commonError'
+       await this.redisService.setStreamData('TSL',key,JSON.stringify(logs))    
+       return errorDetails
+     } catch(err){
+       throw err;
+     }
+   }
+
+   async errorobj(errdata:any,error: any,status:any): Promise<any> {    
+    if(error.code){
+      if(error.code == 'ETIMEDOUT')
+        status=408
+    }
+    let errobj = {}
+      errobj['T_ErrorSource'] = errdata.tname,
+      errobj['T_ErrorGroup'] = errdata.errGrp,
+      errobj['T_ErrorCategory'] = errdata.fabric || 9999,  // General - 9999
+      errobj['T_ErrorType'] = errdata.errType ,
+      errobj['T_ErrorCode'] = errdata.errCode,
+      errobj['errorCode'] = status,
+      errobj['errorDetail'] = error  
+    return errobj
+  }
+
+  async readAPI( keys: string,source:string,target:string): Promise<any> {
+    const keyParts = keys.split(':');    
+    const catk:string[] = [];
+    const afgk:string[] = []; 
+    const ak:string[] = [];
+    const afvk:string[] = [];
+    const afsk:string =keyParts[14];
+    const ck = keyParts[1];
+    const fngk = keyParts[3];
+    const fnk = keyParts[5];    
+    catk.push(keyParts[7]);
+    afgk.push(keyParts[9]);
+    ak.push(keyParts[11]) ;
+    afvk.push(keyParts[13]);
+ 
+    let readAPIBody: readAPIDTO  = {
+     SOURCE : source,
+     TARGET : target,
+     CK :ck,
+     FNGK :fngk,
+     FNK :fnk,
+     CATK :catk,
+     AFGK :afgk,
+     AFK :ak,
+     AFVK :afvk,
+     AFSK :afsk,
+    };
+ 
+    const readKey = await axios.post(
+     'http://localhost:3002/api/readkey',readAPIBody
+   )   
+   
+   return readKey.data;
+   }
+
+
+
+}

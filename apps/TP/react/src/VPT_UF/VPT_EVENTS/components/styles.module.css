@@ -1,0 +1,48 @@
+.node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: solid;
+  border-radius: 50%;
+  height: 100px;
+  width: 100px;
+  font-size: 20px;
+}
+.node :global .react-flow__handle {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.GroupNode {
+  border-width: 4px;
+  border-color: '#E74C3C';
+  background-color: '#F5B7B1';
+}
+
+.ControlNode {
+  border-width: 4px;
+  border-color: #17a589;
+  background-color: #a3e4d7;
+}
+
+.EventNode {
+  border-color: #f1c40f;
+  border-width: 4px;
+  background-color: #f9e79f;
+}
+
+.HandlerNode {
+  border-color: #707b7c;
+  border-width: 4px;
+  background-color: #ccd1d1;
+}
+
+.ScreenNode
+{
+  border-color: #2dafbb;
+  border-width: 4px;
+  background-color: #c3f5f5;
+}

@@ -1,0 +1,31 @@
+import { Pagination, PaginationProps } from '@gravity-ui/uikit'
+import React from 'react'
+interface Pagination {
+  rowsPerPage?: number
+  page: number
+  total: number
+  onPageChange: (page: number) => void
+}
+const CustomePagination = ({
+  rowsPerPage = 10,
+  page = 0,
+  total = 1,
+  onPageChange = () => {}
+}: Pagination) => {
+  const handleUpdate: PaginationProps['onUpdate'] = (page, pageSize) => {
+    onPageChange(page)
+  }
+
+  return (
+    <div className='flex w-full items-center justify-center'>
+      <Pagination
+        page={page}
+        pageSize={rowsPerPage}
+        total={total * rowsPerPage}
+        onUpdate={handleUpdate}
+      />
+    </div>
+  )
+}
+
+export default CustomePagination

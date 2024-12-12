@@ -1,0 +1,210 @@
+'use client'
+<%_ let pageGroupId = data _%>
+<%_ let nodes = relation _%>
+<%_ let screenName = data1 _%>
+<%_ let keys = data2 _%>
+import { Grid } from "@gravity-ui/page-constructor";
+import { useLanguage } from "../components/languageContext";
+import React,{ useContext } from "react";
+import { AxiosService } from '@/app/components/axiosService'
+import { uf_authorizationCheckDto,te_refreshDto,te_dfDto } from '@/app/interfaces/interfaces';
+import { codeExecution } from "../utils/codeExecution";
+<%_ for (let i = 0; i < pageGroupId.length; i++) { _%>    
+  <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+    <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+import Group<%= nodes[j].label  %>  from "./Group<%= nodes[j].label  %>/Group<%= nodes[j].label  %>";
+    <%_ } _%>
+  <%_ } _%>
+<%_ } _%>
+import { useEffect, useState } from "react";
+import { useInfoMsg } from "../torusStaticHandlers/infoMsgHandler";
+import { getCookie } from '@/app/components/cookieMgment'
+import { TotalContext, TotalContextProps } from "../globalContext";
+<%
+  // Define the toPascalCase function
+  function toPascalCase(str) {
+    return str
+      .toLowerCase()
+      .replace(/(?:^|\s|_)(\w)/g, (_, c) => c.toUpperCase());
+  }
+ 
+%>
+
+export default function <%= toPascalCase(screenName)%>() {
+  const language=useLanguage();
+  const [refetch, setRefetch] = useState(false)
+<%_ if(keys !== '') {_%>
+<%_for (let i = 0; i < pageGroupId.length; i++) { _%>
+<%_ for(let j = 0;j < nodes.length;j++) { _%> 
+<%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+  const [check<%= nodes[j].label %>,setCheck<%= nodes[j].label  %>,]=useState(false)
+<%_}_%>
+<%_}_%>
+<%_}_%>
+
+  const toast=useInfoMsg()
+  const baseUrl:any=process.env.NEXT_PUBLIC_API_BASE_URL
+  const [lockedData, setLockedData] = useState<any>({})
+  const [primaryTableData, setPrimaryTableData] = useState<any>({primaryKey:"",value:"",compName:""})
+  const [checkToAdd, setCheckToAdd] = useState<any>({})
+    const [dropdownData, setDropdownData] = useState<any>({})
+    <%_ for (let i = 0; i < pageGroupId.length; i++) { _%>
+      <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+        <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group'&& nodes[j].groupType.toLowerCase() === 'group') { _%>
+  const {<%= nodes[j].label  %><%= nodes[j].id.slice(-5) %>, set<%= nodes[j].label %><%= nodes[j].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps   
+      <%_ } _%>
+      <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group'&& nodes[j].groupType.toLowerCase() === 'table') { _%>
+        const {<%= nodes[j].label  %><%= nodes[j].id.slice(-5) %>, set<%= nodes[j].label %><%= nodes[j].id.slice(-5) %>} = useContext(TotalContext) as TotalContextProps
+        <%_ } _%>
+    <%_ } _%>
+    <%_}_%>
+    
+  const token:string = getCookie('token'); 
+  async function securityCheck() {
+    if (token) {
+      try {
+        const uf_dfKey = await AxiosService.get(
+        "/UF/dfKey?ufKey=<%= keys.ufKey %>",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+        if(uf_dfKey?.data?.error == true){
+          toast(uf_dfKey?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        document.cookie = `dfKey=${uf_dfKey.data}`
+
+        if(uf_dfKey.data.length > 0){
+          for (let i = 0; i < uf_dfKey.data.length; i++) {
+            
+            
+            let te_dfBody:te_dfDto={
+              key: uf_dfKey.data[i]
+            }
+            const te_df = await AxiosService.post(
+              "/te/df",
+              te_dfBody,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              }
+            )
+            if(te_df?.data?.error == true){
+              toast(te_df?.data?.errorDetails?.message, 'danger')
+              return
+            }
+            const te_refreshBody:te_refreshDto={
+              key: uf_dfKey.data[i],
+              upId: te_df.data.upid  
+            }
+            const te_refresh:any=await AxiosService.post("/te/refresh",te_refreshBody,{
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+            if(te_refresh?.data?.error == true){
+              toast(te_refresh?.data?.errorDetails?.message, 'danger')
+              return
+            }
+          }
+          }
+
+      } catch (err: any) {
+        toast(err?.message, 'danger')
+      }
+      const uf_authorizationCheckBody:uf_authorizationCheckDto={key:'<%= keys.ufKey  %>'}
+      const uf_authorizationCheck = await AxiosService.post(
+          "/UF/AuthorizationCheck",uf_authorizationCheckBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      if(uf_authorizationCheck?.data?.error === true){
+        toast(uf_authorizationCheck?.data?.errorDetails?.message, 'danger')
+        return
+      }
+      if (uf_authorizationCheck.data.result == 'AA') {
+    <%_ for (let i = 0; i < pageGroupId.length; i++) { _%>
+    <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+    <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+        setCheck<%= nodes[j].label  %>(true)
+    <%_ } _%>
+    <%_ } _%>
+    <%_}_%>    
+      }
+
+      //Code Execution
+      const code = await AxiosService.post('/UF/code', {
+        key: '<%= keys.ufKey  %>'
+      })
+    
+      if (code?.data?.error == true) { 
+        //toast(code?.data?.errorDetails?.message, 'danger')
+        //return
+      }else{
+        if (code?.data !="" ) {
+          let codeStates: any = {}
+          <%_ for (let i = 0; i < pageGroupId.length; i++) { _%>
+            <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+              <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+          codeStates['<%= nodes[j].label  %>'] = <%= nodes[j].label %><%= nodes[j].id.slice(-5) %>
+          codeStates['set<%= nodes[j].label  %>'] = set<%= nodes[j].label %><%= nodes[j].id.slice(-5) %>
+            <%_ } _%>
+          <%_ } _%>
+          <%_}_%>
+          codeExecution(code.data,codeStates)
+        }  
+      }
+    }else{
+      toast('token not found','danger')
+    }
+    
+  }
+
+  useEffect(() => {    
+    securityCheck()   
+  }, [])
+
+
+    <%_ } _%>
+  return (
+    <>
+      <Grid containerClass="grid grid-cols-12 gap-2 " >
+    <%_ for (let i = 0; i < pageGroupId.length; i++) { _%>
+      <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+        <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+        { check<%= nodes[j].label  %> && <Group<%= nodes[j].label  %> <%= %> 
+          <%_ if(keys !== '') {_%> 
+          lockedData={lockedData} 
+          setLockedData={setLockedData} 
+          primaryTableData={primaryTableData}
+          setPrimaryTableData={setPrimaryTableData}
+     /* <%_ for (let i = 0; i < pageGroupId.length; i++) { _%>
+        <%_ for(let j = 0;j < nodes.length;j++) { _%> 
+          <%_ if ( pageGroupId[i] === nodes[j].id && nodes[j].type.toLowerCase() === 'group') { _%>
+          <%= nodes[j].label  %>Data ={<%= nodes[j].label  %>Data} 
+          set<%= nodes[j].label %>Data={set<%= nodes[j].label %>Data}
+      <%_ } _%>
+      <%_ } _%>
+      <%_}_%> */
+          checkToAdd={checkToAdd} 
+          setCheckToAdd={setCheckToAdd}  
+          refetch={refetch}
+          setRefetch={setRefetch}
+          dropdownData={dropdownData} 
+          setDropdownData={setDropdownData}<%_ } _%> 
+        />}
+    <%_ } _%>
+    <%_ } _%>
+    <%_}_%>
+      </Grid> 
+    </>
+  )
+}
+    

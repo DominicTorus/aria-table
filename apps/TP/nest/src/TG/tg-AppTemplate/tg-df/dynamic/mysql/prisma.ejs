@@ -1,0 +1,54 @@
+<%_ let uniqueTables = data _%>
+<%_ let relArray = relation _%>
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+provider = "prisma-client-js"
+}
+
+<%_ for (let i = 0; i < uniqueTables.length; i++) { _%>
+model <%= uniqueTables[i].entities.Entity.toLowerCase()  %> {
+<%_ for (let j = 0; j < data[i].entities.attributes.length; j++) { _%>
+<%_ if(uniqueTables[i].entities.attributes[j].cname !== '') {_%>
+<%= uniqueTables[i].entities.attributes[j].cname.toLowerCase()  %>    <% if(uniqueTables[i].entities.attributes[j].dataType.selectedValue === 'Int') { _%> Int<%_ } else {_%> <%= uniqueTables[i].entities.attributes[j].dataType.selectedValue  %><%_ } _%> <%_ if(!uniqueTables[i].entities.attributes[j].isRequired.value) { _%> ? <%_} %> <%= ' '  %>    <%= uniqueTables[i].entities.attributes[j].constraints  %>  <% if(uniqueTables[i].entities.attributes[j].length !== '' && uniqueTables[i].entities.attributes[j].dataType.selectedValue === 'String') { _%>@db.VarChar(length: <%= uniqueTables[i].entities.attributes[j].length  %>)<%_ } %>
+<%_} _%>
+<%_} _%>
+<%_ for (let k = 0; k < relArray.length; k++) { _%>
+<%_ if (relArray[k].Relationship === 'One,One') { _%>
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].sourceEntity ) { _%>
+<%= relArray[k].targetEntity.toLowerCase()  %>   <%= relArray[k].targetEntity  %>?    
+<%_} _%>  
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].targetEntity ) { _%>
+<%= relArray[k].sourceEntity.toLowerCase()  %>   <%= relArray[k].sourceEntity  %> @relation(fields: [<%= relArray[k].targetColumn  %>], references: [<%= relArray[k].sourceColumn  %>])    
+<%_} _%>  
+<%_} _%>  
+<%_ if (relArray[k].Relationship === 'One,Many') { _%>
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].sourceEntity ) { _%>
+<%= relArray[k].targetEntity.toLowerCase()  %>   <%= relArray[k].targetEntity  %>[]    
+<%_} _%>  
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].targetEntity ) { _%>
+<%= relArray[k].sourceEntity.toLowerCase()  %>   <%= relArray[k].sourceEntity  %> @relation(fields: [<%= relArray[k].targetColumn  %>], references: [<%= relArray[k].sourceColumn  %>])   
+<%_} _%>  
+<%_} _%>  
+<%_ if (relArray[k].Relationship === 'Many,Many') { _%>
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].sourceEntity ) { _%>
+<%= relArray[k].targetEntity.toLowerCase()  %>   <%= relArray[k].targetEntity  %>[]    
+<%_} _%>  
+<%_ if (uniqueTables[i].entities.Entity === relArray[k].targetEntity ) { _%>
+<%= relArray[k].sourceEntity.toLowerCase()  %>   <%= relArray[k].sourceEntity  %>[]    
+<%_} _%>  
+<%_} _%> 
+<%_} _%>
+created_date    DateTime     @default(now())  
+created_by    String?       
+modified_date    DateTime     @updatedAt  
+modified_by    String?       
+status    String?       
+next_status    String?     
+process_id    String?
+}
+
+<%_ } _%>
